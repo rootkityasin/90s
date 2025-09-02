@@ -3,6 +3,7 @@ import React from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import type { Product } from '../../lib/types';
+import { WHATSAPP_PHONE, FACEBOOK_PAGE_URL } from '../../lib/config';
 
 export function ProductCard({ p, showPrice, token }: { p: Product; showPrice: boolean; token?: string }) {
   const firstVariant = p.variants[0];
@@ -30,8 +31,8 @@ export function ProductCard({ p, showPrice, token }: { p: Product; showPrice: bo
         <Link href={`/product/${p.slug}${showPrice ? '' : '?mode=client'}`} className="pill" style={{ textDecoration:'none' }}>Details</Link>
         {!showPrice && token && (
           <>
-            <a className="pill" style={{ background:'var(--color-accent)', textDecoration:'none' }} href={`https://wa.me/${process.env.WHATSAPP_PHONE || '00000000000'}?text=Sample%20Token:%20${token}`} target="_blank">WA</a>
-            <a className="pill" style={{ background:'#111', textDecoration:'none' }} href={`https://www.facebook.com/messages/t/YourPage?ref=${token}`} target="_blank">FB</a>
+            <a className="pill" style={{ background:'var(--color-accent)', textDecoration:'none' }} href={`https://wa.me/${WHATSAPP_PHONE}?text=Sample%20Token:%20${encodeURIComponent(token)}`} target="_blank" rel="noreferrer">WA</a>
+            <a className="pill" style={{ background:'#111', textDecoration:'none' }} href={`${FACEBOOK_PAGE_URL.replace(/\/$/, '')}?ref=${encodeURIComponent(token)}`} target="_blank" rel="noreferrer">FB</a>
           </>
         )}
       </div>

@@ -24,12 +24,22 @@ html, body { margin:0; padding:0; font-family: var(--font-body); background:#5b7
 a { color: var(--color-accent); text-decoration:none; }
 a:hover { text-decoration:underline; }
 
-/* Simple subtle noise background (pure CSS) */
-body::before { /* texture layer */
-  content:''; position:fixed; inset:0; pointer-events:none;
-  background: repeating-radial-gradient(circle at 20% 30%, rgba(0,0,0,0.04) 0 2px, transparent 2px 6px), linear-gradient(rgba(255,255,255,0.18), rgba(255,255,255,0.1));
-  mix-blend-mode:multiply; opacity:var(--noise-opacity);
+/* Paper texture overlay (uses /textures/paper.webp if present) */
+body::before {
+  content:'';
+  position:fixed;
+  inset:0;
+  pointer-events:none;
+  background:
+    linear-gradient(180deg,rgba(255,255,255,.55) 0%,rgba(255,255,255,0) 70%),
+    url('/textures/paper.webp');
+  background-size:cover; /* adjust to '600px auto' if using a tiling small texture */
+  background-position:center;
+  mix-blend-mode:multiply;
+  opacity:.5; /* tweak 0.35–0.6 */
+  z-index:0;
 }
+/* (Removed previous sunburst overlay to keep only paper texture) */
 
 .container { max-width:1180px; margin:0 auto; padding:1.5rem; }
 
@@ -54,8 +64,10 @@ body::before { /* texture layer */
 .social-icon svg { width:18px; height:18px; fill:currentColor; }
 .social-icon:hover { background:var(--color-accent); color:#fff; transform:translateY(-4px) rotate(-4deg); }
 
-.logo { display:flex; align-items:center; gap:.55rem; font-size:1.15rem; font-weight:700; letter-spacing:.5px; color:#082c3a; text-decoration:none; font-family:var(--font-display); }
-.logo img { height:42px; width:auto; display:block; }
+.logo { display:flex; align-items:center; gap:.55rem; font-size:1.15rem; font-weight:700; letter-spacing:.5px; color:#082c3a; text-decoration:none; font-family:var(--font-display); line-height:1; }
+.logo-mark { display:block; height:44px; width:auto; color:#fff; background:#000; border-radius:10px; padding:4px 6px 4px 4px; box-shadow:0 4px 10px -4px rgba(0,0,0,.35); }
+.logo-mark svg { display:block; height:100%; width:auto; }
+.logo-text { position:relative; top:1px; }
 .nav-links { display:flex; gap:1.2rem; align-items:center; margin-left:auto; }
 .nav-links a { font-size:.78rem; letter-spacing:.6px; }
 

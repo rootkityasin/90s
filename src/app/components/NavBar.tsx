@@ -1,6 +1,7 @@
 "use client";
 import React from 'react';
 import Link from 'next/link';
+import { Logo } from './Logo';
 
 export function NavBar({ role }: { role?: string }) {
   const [open, setOpen] = React.useState(false);
@@ -13,8 +14,8 @@ export function NavBar({ role }: { role?: string }) {
   return (
     <nav className="site-nav" style={{ background:'transparent', boxShadow:'none', padding:'1rem 2rem', display:'flex', alignItems:'center', gap:'1.4rem' }}>
       <Link href="/" className="logo" onClick={() => setOpen(false)}>
-        <img src="/logo.png" alt="90's Legacy" />
-        <span>90's Legacy</span>
+        <span className="logo-mark"><Logo size={40} /></span>
+        <span className="logo-text">90's Legacy</span>
       </Link>
       <button
         type="button"
