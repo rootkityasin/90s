@@ -1,6 +1,6 @@
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
-import { Hero } from './components/Hero';
+import { Hero } from './components';
 
 export default function Landing() {
   const role = cookies().get('role')?.value;

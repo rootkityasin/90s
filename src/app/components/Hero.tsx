@@ -2,14 +2,8 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 
-const container = {
-  hidden: { opacity: 0 },
-  show: { opacity: 1, transition: { staggerChildren: 0.12, delayChildren: 0.1 } }
-};
-const item = {
-  hidden: { opacity:0, y:30, filter:'blur(6px)' },
-  show: { opacity:1, y:0, filter:'blur(0)', transition:{ duration:.7, ease:[0.22,0.68,0,1] } }
-};
+const container = { hidden:{ opacity:0 }, show:{ opacity:1, transition:{ staggerChildren:0.12, delayChildren:0.1 } } };
+const item = { hidden:{ opacity:0, y:30, filter:'blur(6px)' }, show:{ opacity:1, y:0, filter:'blur(0)', transition:{ duration:.7, ease:[0.22,0.68,0,1] } } };
 
 export function Hero() {
   return (
@@ -19,8 +13,8 @@ export function Hero() {
           <img src="https://images.unsplash.com/photo-1512436991641-6745cdb1723f?w=800" alt="Vintage clothing" />
         </div>
         <div className="social-row">
-          {socialLinks.map((s,i)=>(
-            <motion.a whileHover={{ rotate: s.rotate, scale:1.15 }} whileTap={{ scale:.9 }} key={s.label} className="social-icon" aria-label={s.label} href={s.href} rel="noreferrer" variants={item}>{s.icon}</motion.a>
+          {socialLinks.map(s => (
+            <motion.a key={s.label} className="social-icon" aria-label={s.label} href={s.href} rel="noreferrer" whileHover={{ rotate:s.rotate, scale:1.15 }} whileTap={{ scale:.9 }} variants={item}>{s.icon}</motion.a>
           ))}
         </div>
       </motion.div>
