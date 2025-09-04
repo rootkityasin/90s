@@ -12,12 +12,50 @@ type ProductsPageProps = {
 
 // Simple wrapper component that handles fetching + layout + animations
 export function ProductsPage({ title, description, mode }: ProductsPageProps) {
-  const products = listProducts();
+  const rawProducts = listProducts();
   const showPrice = mode === 'retail';
+  // Retail enhancement: local search, category filter, sort
+  const categories = React.useMemo(() => Array.from(new Set(rawProducts.map(p => p.category))).sort(), [rawProducts]);
+  const [q, setQ] = React.useState('');
+  const [cat, setCat] = React.useState<string>('all');
+  const [sort, setSort] = React.useState<'recent' | 'price-asc' | 'price-desc'>('recent');
+
+  const filtered = rawProducts.filter(p => {
+    if (cat !== 'all' && p.category !== cat) return false;
+    if (q && !p.title.toLowerCase().includes(q.toLowerCase()) && !p.description.toLowerCase().includes(q.toLowerCase())) return false;
+    return true;
+  });
+  const products = filtered.slice().sort((a,b) => {
+    if (sort === 'price-asc') return a.variants[0].retailPriceBDT - b.variants[0].retailPriceBDT;
+    if (sort === 'price-desc') return b.variants[0].retailPriceBDT - a.variants[0].retailPriceBDT;
+    return 0; // recent (original order from store unmodified)
+  });
+
   return (
     <main className="container">
-      <FadeUpDiv index={0}><h1 className={showPrice ? 'header-accent' : 'header-accent'}>{title}</h1></FadeUpDiv>
+      <FadeUpDiv index={0}><h1 className='header-accent'>{title}</h1></FadeUpDiv>
       <FadeUpDiv index={1}><p style={{ maxWidth:640, fontSize:'.8rem' }}>{description}</p></FadeUpDiv>
+      {showPrice && (
+        <div style={{ display:'flex', flexWrap:'wrap', gap:'.8rem', marginTop:'1.4rem', alignItems:'center', background:'var(--color-surface)', padding:'1rem 1.2rem', borderRadius:16, boxShadow:'0 4px 14px -6px rgba(0,0,0,.25)' }}>
+          <input
+            placeholder='Search retail products'
+            value={q}
+            onChange={e=>setQ(e.target.value)}
+            style={controlStyle}
+            aria-label='Search products'
+          />
+          <select value={cat} onChange={e=>setCat(e.target.value)} style={controlStyle} aria-label='Filter category'>
+            <option value='all'>All Categories</option>
+            {categories.map(c => <option key={c} value={c}>{c}</option>)}
+          </select>
+          <select value={sort} onChange={e=>setSort(e.target.value as any)} style={controlStyle} aria-label='Sort products'>
+            <option value='recent'>Recent</option>
+            <option value='price-asc'>Price ↑</option>
+            <option value='price-desc'>Price ↓</option>
+          </select>
+          <span style={{ fontSize:'.65rem', letterSpacing:'.8px', textTransform:'uppercase', opacity:.75 }}>{products.length} items</span>
+        </div>
+      )}
       <Stagger>
         <div className="grid" style={{ marginTop:'1.2rem' }}>
           {products.map(p => (
@@ -33,3 +71,13 @@ export function ProductsPage({ title, description, mode }: ProductsPageProps) {
     </main>
   );
 }
+
+const controlStyle: React.CSSProperties = {
+  background:'#1e2b4f',
+  color:'#fff',
+  border:'1px solid #22315a',
+  padding:'.55rem .75rem',
+  borderRadius:10,
+  fontSize:'.7rem',
+  letterSpacing:'.5px'
+};

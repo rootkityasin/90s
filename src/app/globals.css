@@ -33,7 +33,7 @@ body::before {
   pointer-events:none;
   /* Full-page uniform paper texture (removed previous vertical fade) */
   /* Using WebP for paper for better compression */
-  background: url('/textures/paper.webp');
+  background: url('/assets/textures/paper.webp');
   background-size:cover; /* If you create a seamless smaller tile switch to: 800px auto; background-repeat:repeat; */
   background-position:center;
   mix-blend-mode:multiply; /* keeps color palette while adding grain */
@@ -49,13 +49,13 @@ body::before {
 .panel::after { content:''; position:absolute; inset:0; pointer-events:none; background-image:radial-gradient(rgba(0,0,0,0.12) 0.5px,transparent 0.5px); background-size:8px 8px; opacity:.22; mix-blend-mode:multiply; }
 /* Optional internal texture overlay for panels */
 /* Optional internal texture overlay for panels (paper = webp) */
-.panel.textured::before { content:''; position:absolute; inset:0; pointer-events:none; background:url('/textures/paper.webp') center/900px auto repeat; opacity:.35; mix-blend-mode:multiply; }
-/* Home hero custom texture (uses /textures/home-hero.jpg). */
+.panel.textured::before { content:''; position:absolute; inset:0; pointer-events:none; background:url('/assets/textures/paper.webp') center/900px auto repeat; opacity:.35; mix-blend-mode:multiply; }
+/* Home hero custom texture (now at /assets/textures/home-hero.jpg). */
 /* Hero texture: configurable sizing via --hero-texture-size. Add .hero-texture-contain to show full image without crop. */
 .panel.hero-texture { position:relative; z-index:0; }
 .panel.hero-texture > * { position:relative; z-index:1; }
 .panel.hero-texture::before { content:''; position:absolute; inset:0; pointer-events:none; z-index:0;
-  background: url('/textures/home-hero.jpg') center/100% 100% no-repeat;
+  background: url('/assets/textures/home-hero.jpg') center/100% 100% no-repeat;
   background-repeat:no-repeat;
   background-size:100% 100%;
   mix-blend-mode:multiply; opacity:.55; }

@@ -13,6 +13,8 @@ export type Product = {
   description: string;
   category: string;
   heroImage: string;
+  // Additional gallery images (including heroImage as first element optionally)
+  images?: string[]; // ordered list of image asset paths
   variants: Variant[];
   createdAt: string;
   updatedAt: string;

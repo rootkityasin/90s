@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { motion } from 'framer-motion';
 import type { Product } from '../../lib/types';
 import { WHATSAPP_PHONE, FACEBOOK_PAGE_URL } from '../../lib/config';
+import { ZoomImage } from './ZoomImage';
 
 export function ProductCard({ p, showPrice, token }: { p: Product; showPrice: boolean; token?: string }) {
   const firstVariant = p.variants[0];
@@ -19,7 +20,7 @@ export function ProductCard({ p, showPrice, token }: { p: Product; showPrice: bo
     >
       <div className="badge">{p.category}</div>
       {/* Using next/image would need explicit height/width; for simplicity using plain img now */}
-  <motion.img src={p.heroImage} alt={p.title} style={{ width:'100%', height:160, objectFit:'cover', borderRadius:8 }} whileHover={{ scale:1.05 }} transition={{ type:'spring', stiffness:220, damping:18 }} />
+  <ZoomImage src={p.heroImage} alt={p.title} height={160} />
       <h3>{p.title}</h3>
       <p style={{ fontSize:'.75rem', lineHeight:1.3 }}>{p.description}</p>
       {showPrice ? (

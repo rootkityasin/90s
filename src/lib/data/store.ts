@@ -1,39 +1,31 @@
 // Simple in-memory store for demo purposes. Replace with DB later.
 // Because this runs in a single server process, data resets on restart.
 import { Product, ProductInput, SalesSnapshot } from '../types';
+import { generateProductsFromManifest } from './productManifest';
 // random uuid helper (no node types assumption)
 const randomUUID = (typeof crypto !== 'undefined' && (crypto as any).randomUUID) ? () => (crypto as any).randomUUID() : () => 'id-' + Math.random().toString(36).slice(2,11);
 
-let products: Product[] = [
-  {
-    id: randomUUID(),
-    slug: 'retro-teal-shirt',
-    title: "Retro Teal Shirt",
-    description: "Breathable cotton blend shirt with a 90's teal vibe.",
-    category: 'shirt',
-    heroImage: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=800',
-    variants: [
-      { id: randomUUID(), sku: 'RTS-TEAL-M', color: 'teal', size: 'M', retailPriceBDT: 1800 },
-      { id: randomUUID(), sku: 'RTS-TEAL-L', color: 'teal', size: 'L', retailPriceBDT: 1800 }
-    ],
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
-  },
-  {
-    id: randomUUID(),
-    slug: 'magenta-hoodie',
-    title: 'Magenta Hoodie',
-    description: "Soft fleece hoodie with bold magenta tone.",
-    category: 'hoodie',
-    heroImage: 'https://images.unsplash.com/photo-1520970014086-2208d157c9e2?w=800',
-    variants: [
-      { id: randomUUID(), sku: 'MHO-MAG-S', color: 'magenta', size: 'S', retailPriceBDT: 2600 },
-      { id: randomUUID(), sku: 'MHO-MAG-M', color: 'magenta', size: 'M', retailPriceBDT: 2600 }
-    ],
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
-  }
-];
+// Generate base data from manifest (all images become products unless manually grouped)
+const manifestProducts = generateProductsFromManifest();
+
+// Basic price heuristics by category
+const basePrice: Record<string, number> = { cargos: 2200, chinos: 2000, tshirt: 950, hoodies: 2600, trouser: 2400 };
+
+let products: Product[] = manifestProducts.map(mp => ({
+  id: randomUUID(),
+  slug: mp.slug,
+  title: mp.title,
+  description: `${mp.title} (${mp.category}).`,
+  category: mp.category,
+  heroImage: mp.heroImage,
+  images: mp.images,
+  variants: [
+    { id: randomUUID(), sku: `${mp.slug.toUpperCase()}-M`, color: 'assorted', size: 'M', retailPriceBDT: basePrice[mp.category] || 1000 },
+    { id: randomUUID(), sku: `${mp.slug.toUpperCase()}-L`, color: 'assorted', size: 'L', retailPriceBDT: basePrice[mp.category] || 1000 }
+  ],
+  createdAt: new Date().toISOString(),
+  updatedAt: new Date().toISOString()
+}));
 
 let sales: SalesSnapshot[] = Array.from({ length: 14 }).map((_, i) => {
   const date = new Date(Date.now() - (13 - i) * 86400000);

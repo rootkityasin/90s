@@ -2,6 +2,7 @@ import './globals.css';
 import React from 'react';
 import { cookies } from 'next/headers';
 import { NavBar } from './components';
+import { CartProvider } from './components/cart/CartContext';
 
 export const metadata = {
   title: "90's Commerce",
@@ -13,8 +14,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <body>
-  <NavBar role={role} />
-        {children}
+        <CartProvider>
+          <NavBar role={role} />
+          {children}
+        </CartProvider>
       </body>
     </html>
   );
