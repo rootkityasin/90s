@@ -14,7 +14,7 @@ export function NavBar({ role }: { role?: string }) {
   return (
     <nav className="site-nav" style={{ background:'transparent', boxShadow:'none', padding:'1rem 2rem', display:'flex', alignItems:'center', gap:'1.4rem' }}>
       <Link href="/" className="logo" onClick={() => setOpen(false)}>
-        <span className="logo-mark"><Logo size={40} /></span>
+        <Logo size={40} />
         <span className="logo-text">90's Legacy</span>
       </Link>
       <button
@@ -27,7 +27,8 @@ export function NavBar({ role }: { role?: string }) {
         Menu
       </button>
       <div className={`nav-links${open ? ' open' : ''}`} onClick={handleNavClick}>
-        <Link href="/retail">Retail</Link>
+  <Link href="/about">About</Link>
+  <Link href="/retail">Retail</Link>
         <Link href="/client">Client</Link>
         <Link href="/admin">Admin</Link>
         {role ? <Link href="/logout">Logout</Link> : <Link href="/login">Login</Link>}

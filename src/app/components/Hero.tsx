@@ -7,7 +7,7 @@ const item = { hidden:{ opacity:0, y:30, filter:'blur(6px)' }, show:{ opacity:1,
 
 export function Hero() {
   return (
-    <motion.div className="panel hero" variants={container} initial="hidden" animate="show">
+  <motion.div className="panel hero hero-texture" variants={container} initial="hidden" animate="show">
       <motion.div className="hero-left" variants={item}>
         <div className="photo-wrapper float-slow">
           <img src="https://images.unsplash.com/photo-1512436991641-6745cdb1723f?w=800" alt="Vintage clothing" />
