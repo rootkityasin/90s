@@ -27,7 +27,7 @@ export function NavBar({ role }: { role?: string }) {
           <li><Link href="/contact" role="menuitem">Contact</Link></li>
         </ul>
       </div>
-      <div className="nav-right">
+  <div className="nav-right" style={{ display:'flex', alignItems:'center', gap:'.9rem' }}>
         <form onSubmit={submit} className="nav-search" role="search" aria-label="Site search">
           <span className="icon" aria-hidden="true">🔍</span>
           <input
