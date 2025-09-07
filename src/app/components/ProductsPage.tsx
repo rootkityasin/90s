@@ -1,6 +1,7 @@
 "use client";
 import React from 'react';
 import { listProducts, generateWholesaleToken } from '../../lib/data/store';
+import type { Product } from '../../lib/types';
 import { ProductCard } from './ProductCard';
 import { FadeUpDiv, Stagger } from './animations';
 
@@ -12,7 +13,27 @@ type ProductsPageProps = {
 
 // Simple wrapper component that handles fetching + layout + animations
 export function ProductsPage({ title, description, mode }: ProductsPageProps) {
-  const rawProducts = listProducts();
+  const [rawProducts, setRawProducts] = React.useState<Product[]>(listProducts());
+  // realtime subscription (SSE)
+  React.useEffect(() => {
+    const ev = new EventSource('/api/realtime-products');
+    ev.addEventListener('productUpdate', (e: MessageEvent) => {
+      try {
+        const updated: Product = JSON.parse(e.data);
+        setRawProducts(prev => {
+          const idx = prev.findIndex(p => p.id === updated.id);
+          if (idx === -1) return prev; // ignore if not present (or push?)
+          const copy = prev.slice();
+            copy[idx] = updated;
+          return copy;
+        });
+      } catch {}
+    });
+    ev.addEventListener('snapshot', (e: MessageEvent) => {
+      try { const list: Product[] = JSON.parse(e.data); setRawProducts(list); } catch {}
+    });
+    return () => ev.close();
+  }, []);
   const showPrice = mode === 'retail';
   // Retail enhancement: local search, category filter, sort
   const categories = React.useMemo(() => Array.from(new Set(rawProducts.map(p => p.category))).sort(), [rawProducts]);

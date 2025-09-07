@@ -25,6 +25,7 @@ export function Hero() {
           <a href="/login" className="btn-sale wiggle">50% OFF</a>
           <a href="/retail" className="pill" style={{ background:'#111' }}>Explore Retail</a>
           <a href="/client" className="pill" style={{ background:'#008F7D' }}>Client Samples</a>
+          <a href="/admin" className="pill" style={{ background:'#5A189A' }}>Admin</a>
         </motion.div>
         <motion.p style={{ fontSize:'.82rem', maxWidth:480, lineHeight:1.45, marginTop:'1.3rem' }} variants={item}>Browse curated fabric & garment samples. Retail shows live prices; client area uses SKU tokens for quick WhatsApp negotiation and sourcing clarity.</motion.p>
       </div>

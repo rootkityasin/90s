@@ -1,5 +1,6 @@
 'use server';
-import { addProduct, updateProduct } from '../../lib/data/store';
+import { addProduct, updateProduct, listProducts } from '../../lib/data/store';
+import { broadcastProductUpdate } from '../../lib/realtime';
 import { revalidatePath } from 'next/cache';
 
 export async function createProduct(formData: FormData) {
@@ -16,6 +17,7 @@ export async function createProduct(formData: FormData) {
   const product = addProduct({ slug, title, description, category, heroImage, variants: [ { id: crypto.randomUUID(), sku: variantSku, color, size, retailPriceBDT: price } ] });
   revalidatePath('/retail');
   revalidatePath('/client');
+  broadcastProductUpdate(product);
   return { product };
 }
 
@@ -27,5 +29,43 @@ export async function editProduct(id: string, formData: FormData) {
   const updated = updateProduct(id, patch);
   revalidatePath('/retail');
   revalidatePath('/client');
+  if (updated) broadcastProductUpdate(updated);
+  return { product: updated };
+}
+
+export async function fullEditProduct(formData: FormData) {
+  const productId = (formData.get('productId') || '').toString();
+  if (!productId) return { error: 'Missing productId' };
+  const patch: any = {};
+  const fields = ['slug','title','description','category','heroImage'];
+  fields.forEach(f => { if (formData.get(f) !== null) patch[f] = formData.get(f); });
+  // images (comma separated)
+  const imagesCSV = (formData.get('images') || '').toString();
+  if (imagesCSV.trim()) {
+    patch.images = imagesCSV.split(',').map(s=>s.trim()).filter(Boolean);
+  } else {
+    patch.images = undefined; // allow clearing
+  }
+  // variants
+  const variantCount = parseInt((formData.get('variantCount') || '0').toString(),10);
+  const variants: any[] = [];
+  for (let i=0;i<variantCount;i++) {
+    const id = (formData.get(`variant_id_${i}`)||'').toString() || crypto.randomUUID();
+    const sku = (formData.get(`variant_sku_${i}`)||'').toString();
+    if(!sku) continue; // skip empty rows
+    variants.push({
+      id,
+      sku,
+      color: (formData.get(`variant_color_${i}`)||'').toString(),
+      size: (formData.get(`variant_size_${i}`)||'').toString(),
+      retailPriceBDT: parseInt((formData.get(`variant_price_${i}`)||'0').toString(),10) || 0
+    });
+  }
+  if (variants.length) patch.variants = variants;
+  const updated = updateProduct(productId, patch);
+  revalidatePath('/retail');
+  revalidatePath('/client');
+  revalidatePath('/admin');
+  if (updated) broadcastProductUpdate(updated);
   return { product: updated };
 }

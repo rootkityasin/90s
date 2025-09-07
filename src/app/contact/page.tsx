@@ -1,3 +1,4 @@
+"use client";
 import React from 'react';
 import { WHATSAPP_PHONE, FACEBOOK_PAGE_URL } from '../../lib/config';
 

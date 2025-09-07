@@ -7,7 +7,7 @@ import { editProduct } from '../actions';
 const container = { hidden:{}, show:{ transition:{ staggerChildren:0.07 } } };
 const item = { hidden:{ opacity:0, y:18, scale:.95 }, show:{ opacity:1, y:0, scale:1, transition:{ duration:.5, ease:[0.22,0.68,0,1] } } };
 
-export default function AdminAnimatedGrid({ products }: { products: Product[] }) {
+export default function AdminAnimatedGrid({ products, onFullEdit }: { products: Product[]; onFullEdit?: (p: Product) => void }) {
   return (
     <motion.div className="grid" variants={container} initial="hidden" animate="show">
       {products.map(p => (
@@ -25,6 +25,11 @@ export default function AdminAnimatedGrid({ products }: { products: Product[] })
               <button type="submit" style={{ fontSize:'.7rem', padding:'.4rem .6rem' }}>Save</button>
             </form>
           </details>
+          {onFullEdit && (
+            <button type="button" onClick={() => onFullEdit(p)} style={{ display:'inline-block', marginTop:'.5rem', fontSize:'.65rem', background:'#1e2b4f', color:'#fff', padding:'.4rem .65rem', borderRadius:6 }}>
+              Full Edit →
+            </button>
+          )}
         </motion.div>
       ))}
     </motion.div>
