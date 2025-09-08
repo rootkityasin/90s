@@ -2,9 +2,12 @@
 import React from 'react';
 import Link from 'next/link';
 import { listProducts } from '../../lib/data/store';
+import { usePathname } from 'next/navigation';
 
 export function CategoryDropdown() {
   const [isOpen, setIsOpen] = React.useState(false);
+  const rootRef = React.useRef<HTMLDivElement | null>(null);
+  const pathname = usePathname();
   // Derive categories from product data to keep in sync with product list
   const [cats, setCats] = React.useState<string[]>(() => {
     const all = listProducts();
@@ -35,8 +38,34 @@ export function CategoryDropdown() {
     setIsOpen(false);
   };
 
+  // Close on outside click or Escape
+  React.useEffect(() => {
+    if (!isOpen) return;
+    const handleOutside = (e: MouseEvent | TouchEvent) => {
+      if (rootRef.current && !rootRef.current.contains(e.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setIsOpen(false);
+    };
+    document.addEventListener('mousedown', handleOutside, { capture: true });
+    document.addEventListener('touchstart', handleOutside, { capture: true });
+    document.addEventListener('keydown', handleKey);
+    return () => {
+      document.removeEventListener('mousedown', handleOutside, { capture: true } as any);
+      document.removeEventListener('touchstart', handleOutside, { capture: true } as any);
+      document.removeEventListener('keydown', handleKey);
+    };
+  }, [isOpen]);
+
+  // Close on route change
+  React.useEffect(() => {
+    setIsOpen(false);
+  }, [pathname]);
+
   return (
-    <div className="category-dropdown">
+    <div className="category-dropdown" ref={rootRef}>
       <button 
         className="category-toggle"
         onClick={toggleDropdown}

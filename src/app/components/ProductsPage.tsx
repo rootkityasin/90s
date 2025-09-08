@@ -5,6 +5,7 @@ import { listProducts, generateWholesaleToken } from '../../lib/data/store';
 import type { Product } from '../../lib/types';
 import { ProductCard } from './ProductCard';
 import { FadeUpDiv, Stagger } from './animations';
+import { motion } from 'framer-motion';
 
 type ProductsPageProps = {
   title: string;
@@ -41,6 +42,11 @@ export function ProductsPage({ title, description, mode }: ProductsPageProps) {
   const [q, setQ] = React.useState('');
   const [cat, setCat] = React.useState<string>('all');
   const [sort, setSort] = React.useState<'recent' | 'price-asc' | 'price-desc'>('recent');
+  const PAGE_SIZE = 15;
+  const [visible, setVisible] = React.useState(PAGE_SIZE);
+  const sentinelRef = React.useRef<HTMLDivElement | null>(null);
+  const loadingMoreRef = React.useRef(false);
+  const [showScrollTop, setShowScrollTop] = React.useState(false);
 
   // Sync category from URL query (?category=...) so external links like the navbar dropdown filter this page
   const searchParams = useSearchParams();
@@ -51,6 +57,11 @@ export function ProductsPage({ title, description, mode }: ProductsPageProps) {
     setCat(prev => (prev === normalized ? prev : normalized));
     // We intentionally do not sync q/sort from URL right now
   }, [searchParams, categories]);
+
+  // Reset visible items when filters, search, sort, or underlying data change
+  React.useEffect(() => {
+    setVisible(PAGE_SIZE);
+  }, [q, cat, sort, rawProducts.length]);
 
   const filtered = rawProducts.filter(p => {
     if (cat !== 'all' && p.category !== cat) return false;
@@ -63,10 +74,42 @@ export function ProductsPage({ title, description, mode }: ProductsPageProps) {
     return 0; // recent (original order from store unmodified)
   });
 
+  // IntersectionObserver to auto-load more as user nears bottom
+  React.useEffect(() => {
+    const node = sentinelRef.current;
+    if (!node) return;
+    const io = new IntersectionObserver((entries) => {
+      const entry = entries[0];
+      if (entry.isIntersecting && !loadingMoreRef.current) {
+        if (visible < products.length) {
+          loadingMoreRef.current = true;
+          // Small rAF to batch state updates and avoid rapid double-fires
+          requestAnimationFrame(() => {
+            setVisible(v => Math.min(v + PAGE_SIZE, products.length));
+            loadingMoreRef.current = false;
+          });
+        }
+      }
+    }, { root: null, rootMargin: '200px', threshold: 0 });
+    io.observe(node);
+    return () => io.disconnect();
+  }, [visible, products.length]);
+
+  // Toggle scroll-to-top visibility based on scroll depth
+  React.useEffect(() => {
+    const onScroll = () => {
+      // show after user scrolls down a bit
+      setShowScrollTop(window.scrollY > 600);
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
   return (
     <main className="container">
       <FadeUpDiv index={0}><h1 className='header-accent'>{title}</h1></FadeUpDiv>
-      <FadeUpDiv index={1}><p style={{ maxWidth:640, fontSize:'.8rem' }}>{description}</p></FadeUpDiv>
+  <FadeUpDiv index={1}><p style={{ maxWidth:640, fontSize:'.8rem', fontFamily:'var(--font-body)' }}>{description}</p></FadeUpDiv>
       {showPrice && (
         <div style={{ display:'flex', flexWrap:'wrap', gap:'.8rem', marginTop:'1.4rem', alignItems:'center', background:'var(--color-surface)', padding:'1rem 1.2rem', borderRadius:16, boxShadow:'0 4px 14px -6px rgba(0,0,0,.25)' }}>
           <input
@@ -90,7 +133,7 @@ export function ProductsPage({ title, description, mode }: ProductsPageProps) {
       )}
       <Stagger>
         <div className="grid" style={{ marginTop:'1.2rem' }}>
-          {products.map(p => (
+      {products.slice(0, visible).map(p => (
             <ProductCard
               key={p.id}
               p={p}
@@ -100,6 +143,53 @@ export function ProductsPage({ title, description, mode }: ProductsPageProps) {
           ))}
         </div>
       </Stagger>
+    {/* Sentinel for infinite scroll (hidden, just for IntersectionObserver) */}
+    <div ref={sentinelRef} aria-hidden="true" style={{ height: 1 }} />
+
+  {visible >= 30 && showScrollTop && (
+  <motion.button
+          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+          aria-label="Scroll to top"
+          initial={{ opacity: 0, y: 16, scale: 0.95 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          transition={{ duration: 0.3 }}
+          whileHover={{ scale: 1.06 }}
+          whileTap={{ scale: 0.95 }}
+          style={{
+            position: 'fixed',
+            left: '50%',
+            bottom: 18,
+            width: 56,
+            height: 40,
+            borderRadius: 12,
+            border: 'none',
+            background: 'var(--color-accent)',
+            color: '#fff',
+            cursor: 'pointer',
+            boxShadow: '0 10px 22px -10px rgba(0,0,0,.45)',
+            zIndex: 9999,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            transform: 'translateX(-50%)'
+          }}
+        >
+          <motion.svg
+            width="26"
+            height="26"
+            viewBox="0 0 24 24"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            animate={{ y: [0, -4, 0] }}
+            transition={{ duration: 1.1, repeat: Infinity, ease: 'easeInOut' }}
+            aria-hidden="true"
+          >
+            {/* Double chevron up */}
+            <path d="M6 16 L12 10 L18 16" stroke="#ffffff" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" />
+            <path d="M6 20 L12 14 L18 20" stroke="#ffffff" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" />
+          </motion.svg>
+  </motion.button>
+  )}
     </main>
   );
 }
