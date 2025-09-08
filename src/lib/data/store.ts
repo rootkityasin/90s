@@ -58,6 +58,12 @@ export function updateProduct(id: string, patch: Partial<ProductInput>) {
   return products[idx];
 }
 
+export function deleteProduct(id: string): boolean {
+  const initialLength = products.length;
+  products = products.filter(p => p.id !== id);
+  return products.length < initialLength;
+}
+
 export function listSales() {
   return sales;
 }

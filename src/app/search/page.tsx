@@ -1,6 +1,6 @@
 import React from 'react';
 import { listProducts } from '../../lib/data/store';
-import Link from 'next/link';
+import { ProductCard } from '../components/ProductCard';
 
 export const metadata = { title: 'Search | 90\'s Legacy' };
 
@@ -16,10 +16,7 @@ export default function SearchPage({ searchParams }: { searchParams: { q?: strin
         {q && results.length === 0 && <p style={{ fontSize:'.8rem' }}>No products found.</p>}
         <div className="grid" style={{ marginTop:'1rem' }}>
           {results.map(p => (
-            <Link key={p.id} href={`/product/${p.slug}`} className="card" style={{ textDecoration:'none', color:'inherit' }}>
-              <h3 style={{ margin:'0 0 .4rem' }}>{p.title}</h3>
-              <p style={{ fontSize:'.7rem', lineHeight:1.3 }}>{p.description.slice(0,90)}...</p>
-            </Link>
+            <ProductCard key={p.id} p={p} showPrice={true} />
           ))}
         </div>
         {!q && <p style={{ fontSize:'.75rem', opacity:.7 }}>Type a term in the top search bar.</p>}

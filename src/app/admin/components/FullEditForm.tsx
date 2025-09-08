@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import type { Product, Variant } from '../../../lib/types';
 import { fullEditProduct } from '../actions';
+import DeleteButton from './DeleteButton';
 
 export default function FullEditForm({ product }: { product: Product }) {
   const [variants, setVariants] = useState<Variant[]>(product.variants);
@@ -120,7 +121,8 @@ export default function FullEditForm({ product }: { product: Product }) {
         </div>
       </fieldset>
 
-      <div style={{ display:'flex', gap:'.6rem', justifyContent:'flex-end' }}>
+      <div style={{ display:'flex', gap:'.6rem', justifyContent:'space-between', alignItems: 'center' }}>
+        <DeleteButton productId={product.id} />
         <button type="submit" style={{ background:'#0a462f', color:'#fff', padding:'.7rem 1.1rem', borderRadius:8 }}>Save Changes</button>
       </div>
     </form>

@@ -29,6 +29,11 @@ export function broadcastProductUpdate(p: Product | null) {
   clients.forEach(c => !c.closed() && send(c, `event: productUpdate\n` + `data: ${payload}\n\n`));
 }
 
+export function broadcastProductDelete(productId: string) {
+  if (!productId) return;
+  clients.forEach(c => !c.closed() && send(c, `event: productDelete\n` + `data: ${JSON.stringify({ id: productId })}\n\n`));
+}
+
 // Optional keepalive to prevent proxies closing connection
 setInterval(() => {
   clients.forEach(c => !c.closed() && send(c, `event: ping\n` + `data: ${Date.now()}\n\n`));

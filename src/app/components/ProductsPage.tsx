@@ -1,5 +1,6 @@
 "use client";
 import React from 'react';
+import { useSearchParams } from 'next/navigation';
 import { listProducts, generateWholesaleToken } from '../../lib/data/store';
 import type { Product } from '../../lib/types';
 import { ProductCard } from './ProductCard';
@@ -40,6 +41,16 @@ export function ProductsPage({ title, description, mode }: ProductsPageProps) {
   const [q, setQ] = React.useState('');
   const [cat, setCat] = React.useState<string>('all');
   const [sort, setSort] = React.useState<'recent' | 'price-asc' | 'price-desc'>('recent');
+
+  // Sync category from URL query (?category=...) so external links like the navbar dropdown filter this page
+  const searchParams = useSearchParams();
+  React.useEffect(() => {
+    if (!searchParams) return;
+    const urlCat = searchParams.get('category');
+    const normalized = urlCat && categories.includes(urlCat) ? urlCat : 'all';
+    setCat(prev => (prev === normalized ? prev : normalized));
+    // We intentionally do not sync q/sort from URL right now
+  }, [searchParams, categories]);
 
   const filtered = rawProducts.filter(p => {
     if (cat !== 'all' && p.category !== cat) return false;

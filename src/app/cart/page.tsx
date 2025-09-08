@@ -9,7 +9,42 @@ export default function CartPage() {
     <main className="container">
       <h1 className='header-accent' style={{ marginTop:0 }}>Cart</h1>
       {items.length === 0 && (
-        <p style={{ fontSize:'.8rem' }}>Cart is empty. <Link href="/retail">Browse products</Link></p>
+        <div className="empty-cart-container">
+          <div className="empty-cart-content">
+            <div className="empty-cart-icon">
+              <img 
+                src="/assets/animation/empty cart.gif" 
+                alt="Empty cart animation"
+                className="empty-cart-gif"
+              />
+            </div>
+            <h2 className="empty-cart-title">Your cart is empty</h2>
+            <p className="empty-cart-subtitle">
+              Looks like you haven't added anything to your cart yet. 
+              Let's change that!
+            </p>
+            <div className="empty-cart-animation">
+              <div className="floating-items">
+                <span className="item">👕</span>
+                <span className="item">👖</span>
+                <span className="item">👟</span>
+                <span className="item">🧢</span>
+                <span className="item">👜</span>
+              </div>
+            </div>
+            <Link href="/retail" className="empty-cart-button">
+              Start Shopping
+            </Link>
+            <div className="empty-cart-suggestions">
+              <p>Popular picks:</p>
+              <div className="suggestion-tags">
+                <Link href="/retail" className="tag">Vintage Tees</Link>
+                <Link href="/retail" className="tag">Retro Jackets</Link>
+                <Link href="/retail" className="tag">90s Accessories</Link>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
       {items.length > 0 && (
         <div style={{ marginTop:'1rem', display:'grid', gap:'1rem' }}>

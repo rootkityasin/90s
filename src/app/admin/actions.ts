@@ -1,6 +1,6 @@
 'use server';
-import { addProduct, updateProduct, listProducts } from '../../lib/data/store';
-import { broadcastProductUpdate } from '../../lib/realtime';
+import { addProduct, updateProduct, deleteProduct as deleteProductFromStore, listProducts } from '../../lib/data/store';
+import { broadcastProductUpdate, broadcastProductDelete } from '../../lib/realtime';
 import { revalidatePath } from 'next/cache';
 
 export async function createProduct(formData: FormData) {
@@ -68,4 +68,17 @@ export async function fullEditProduct(formData: FormData) {
   revalidatePath('/admin');
   if (updated) broadcastProductUpdate(updated);
   return { product: updated };
+}
+
+export async function deleteProduct(productId: string) {
+  if (!productId) return { error: 'Missing productId' };
+  const success = deleteProductFromStore(productId);
+  if (success) {
+    revalidatePath('/retail');
+    revalidatePath('/client');
+    revalidatePath('/admin');
+    broadcastProductDelete(productId);
+    return { success: true };
+  }
+  return { error: 'Product not found' };
 }
