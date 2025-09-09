@@ -9,14 +9,51 @@ export async function createProduct(formData: FormData) {
   const slug = (formData.get('slug') || title.toLowerCase().replace(/[^a-z0-9]+/g,'-')).toString();
   const description = (formData.get('description') || '').toString();
   const category = (formData.get('category') || '').toString();
-  const heroImage = (formData.get('heroImage') || '').toString();
-  const price = parseInt((formData.get('price') || '0').toString(), 10);
-  const variantSku = (formData.get('sku') || '').toString();
-  const color = (formData.get('color') || '').toString();
-  const size = (formData.get('size') || '').toString();
-  const product = addProduct({ slug, title, description, category, heroImage, variants: [ { id: crypto.randomUUID(), sku: variantSku, color, size, retailPriceBDT: price } ] });
+  
+  // Handle images (comma separated)
+  const imagesCSV = (formData.get('images') || '').toString();
+  const images = imagesCSV.trim() ? imagesCSV.split(',').map(s=>s.trim()).filter(Boolean) : [];
+  
+  // Hero image defaults to first uploaded image or manual input
+  let heroImage = (formData.get('heroImage') || '').toString();
+  if (!heroImage && images.length > 0) {
+    heroImage = images[0];
+  }
+  
+  // Handle variants
+  const variantCount = parseInt((formData.get('variantCount') || '0').toString(),10);
+  const variants: any[] = [];
+  for (let i=0;i<variantCount;i++) {
+    const id = (formData.get(`variant_id_${i}`)||'').toString() || crypto.randomUUID();
+    const sku = (formData.get(`variant_sku_${i}`)||'').toString();
+    if(!sku) continue; // skip empty rows
+    variants.push({
+      id,
+      sku,
+      color: (formData.get(`variant_color_${i}`)||'').toString(),
+      size: (formData.get(`variant_size_${i}`)||'').toString(),
+      retailPriceBDT: parseInt((formData.get(`variant_price_${i}`)||'0').toString(),10) || 0
+    });
+  }
+  
+  // Ensure at least one variant exists
+  if (variants.length === 0) {
+    return { error: 'At least one variant with SKU is required' };
+  }
+  
+  const product = addProduct({ 
+    slug, 
+    title, 
+    description, 
+    category, 
+    heroImage,
+    images,
+    variants 
+  });
+  
   revalidatePath('/retail');
   revalidatePath('/client');
+  revalidatePath('/admin');
   broadcastProductUpdate(product);
   return { product };
 }

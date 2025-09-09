@@ -45,8 +45,14 @@ export function NavBar({ role }: { role?: string }) {
 
   function submit(e: React.FormEvent) {
     e.preventDefault();
-    if (!query.trim()) return;
-    router.push(`/search?q=${encodeURIComponent(query.trim())}`);
+    const term = query.trim();
+    // Close mobile menu (if open) and dismiss keyboard
+    closeMobileMenu();
+    if (document && document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur();
+    }
+    if (!term) return;
+    router.push(`/search?q=${encodeURIComponent(term)}`);
   }
 
   function toggleMobileMenu() {

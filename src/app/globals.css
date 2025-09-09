@@ -44,6 +44,41 @@ body::before {
 
 .container { max-width:1180px; margin:0 auto; padding:1.5rem; }
 
+/* Admin dashboard charts */
+.admin-dashboard { display: grid; gap: 1.2rem; margin-top: .5rem; font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, 'Noto Sans', sans-serif; }
+.kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px,1fr)); gap: .8rem; }
+.kpi-card { background: var(--color-surface); border-radius: 14px; padding: .9rem 1rem; box-shadow: 0 8px 24px -12px rgba(0,0,0,.35), inset 0 0 0 1px rgba(0,0,0,.06); transition: transform .2s ease, box-shadow .2s ease; }
+.kpi-card:hover { transform: translateY(-2px); box-shadow: 0 12px 28px -12px rgba(0,0,0,.45), inset 0 0 0 1px rgba(0,0,0,.06); }
+.kpi-title { font-size: .7rem; opacity: .75; letter-spacing: .7px; text-transform: uppercase; font-weight: 600; }
+.kpi-value { 
+  font-size: 1.5rem; 
+  font-weight: 800; 
+  margin-top: .2rem; 
+  color: var(--color-accent);
+  background: linear-gradient(135deg, #00A38A 0%, #76e7da 80%);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+  text-shadow: 0 1px 0 rgba(0,0,0,.18);
+}
+.kpi-sub { font-size: .7rem; opacity: .8; margin-top: .2rem; }
+
+.chart-panel { background: var(--color-surface); border-radius: 16px; padding: 1rem; box-shadow: 0 8px 24px -12px rgba(0,0,0,.35), inset 0 0 0 1px rgba(0,0,0,.06); }
+.chart-header { display:flex; align-items:center; justify-content:space-between; margin-bottom: .5rem; }
+.chart-header h3 { margin: 0; font-size: 1rem; }
+.chart-legend { font-size: .7rem; display:flex; align-items:center; gap:.4rem; opacity:.8; }
+.legend-dot { width:10px; height:10px; border-radius: 999px; display:inline-block; }
+.legend-rev { background: var(--color-accent); }
+.legend-ord { background: #ff9643; }
+.chart-wrap { position: relative; width: 100%; height: 260px; }
+.chart-wrap svg { position:absolute; inset:0; width:100%; height:100%; }
+.tooltip { position:absolute; bottom: calc(100% - 8px); transform: translateX(-50%); pointer-events:none; }
+.tooltip-inner { background:#0f1525; color:#fff; border:1px solid #2a3557; border-radius:8px; padding:.4rem .55rem; font-size:.7rem; box-shadow:0 10px 24px -10px rgba(0,0,0,.45); }
+
+@media (max-width: 640px) {
+  /* Make KPI grid two columns on mobile */
+  .kpi-grid { grid-template-columns: repeat(2, 1fr) !important; }
+  .chart-wrap { height: 220px; }
+}
+
 /* Panels */
 .panel { background: var(--color-bg); border-radius:22px; box-shadow:0 10px 26px -8px rgba(0,0,0,.25); position:relative; overflow:hidden; }
 .panel::after { content:''; position:absolute; inset:0; pointer-events:none; background-image:radial-gradient(rgba(0,0,0,0.12) 0.5px,transparent 0.5px); background-size:8px 8px; opacity:.22; mix-blend-mode:multiply; }
@@ -169,6 +204,107 @@ button.secondary { background:var(--color-accent-2); }
 button:hover { background:#006d60; transform:translateY(-2px); }
 button:active { transform:translateY(0); }
 button:disabled { opacity:.5; cursor:not-allowed; }
+
+/* Mobile product grid tightening: aim ~6 items visible (2 cols x ~3 rows) */
+@media (max-width: 640px) {
+  .grid { grid-template-columns: repeat(2, 1fr); gap: .6rem; }
+  .card { padding: .6rem; border-radius: 10px; }
+  .card h3 { font-size: .85rem; margin: .3rem 0 .4rem; }
+  .card p { font-size: .65rem; line-height: 1.25; }
+  .badge { top: .4rem; right: .4rem; padding: .15rem .4rem; font-size: .55rem; }
+  /* ZoomImage container inside card (2nd div child due to badge being first div) */
+  .card > div:nth-of-type(2) { height: 110px !important; border-radius: 10px; }
+}
+
+/* Filter bar mobile ordering and custom select styling (mobile only) */
+@media (max-width: 640px) {
+  .filter-bar { gap:.6rem; display:grid !important; grid-template-columns: 1fr 1fr; }
+  .filter-input { grid-column: 1 / -1; }
+  /* Order: Category first row right, Sort second row left */
+  .filter-cat { order: 1; }
+  .filter-sort { order: 2; }
+  .filter-count { order: 3; grid-column: 2; justify-self: end; align-self:center; font-size:.6rem !important; }
+
+  /* Hide native selects on mobile, use custom ones */
+  .filter-select { display: none !important; }
+  
+  /* Custom select styling for mobile */
+  .custom-select {
+    position: relative;
+    width: 100%;
+  }
+  
+  .custom-select-trigger {
+    width: 100%;
+    background: #1e2b4f;
+    color: #fff;
+    border: 1px solid #22315a;
+    padding: .55rem .75rem;
+    border-radius: 10px;
+    font-size: .7rem;
+    letter-spacing: .5px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    font-family: var(--font-body);
+  }
+  
+  .custom-select-trigger:focus {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+  }
+  
+  .custom-select-arrow {
+    transition: transform 0.2s ease;
+    flex-shrink: 0;
+  }
+  
+  .custom-select-arrow.open {
+    transform: rotate(180deg);
+  }
+  
+  .custom-select-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: #1e2b4f;
+    border: 1px solid #22315a;
+    border-radius: 10px;
+    margin-top: 4px;
+    z-index: 1000;
+    box-shadow: 0 8px 25px -8px rgba(0,0,0,0.3);
+    max-height: 200px;
+    overflow-y: auto;
+  }
+  
+  .custom-select-option {
+    width: 100%;
+    background: transparent;
+    color: #fff;
+    border: none;
+    padding: .75rem;
+    font-size: .7rem;
+    text-align: left;
+    cursor: pointer;
+    font-family: var(--font-body);
+    transition: background-color 0.2s ease;
+  }
+  
+  .custom-select-option:hover,
+  .custom-select-option.selected {
+    background: rgba(0,143,125,0.2);
+  }
+  
+  .custom-select-option:first-child {
+    border-radius: 10px 10px 0 0;
+  }
+  
+  .custom-select-option:last-child {
+    border-radius: 0 0 10px 10px;
+  }
+}
 
 nav.site-nav.primary-nav { 
   position: sticky; 
@@ -843,5 +979,66 @@ table.metrics tbody tr:nth-child(odd) { background:#1a2544; }
   .suggestion-tags {
     flex-direction: column;
     align-items: center;
+  }
+}
+
+/* Admin variant row responsive styling */
+.variant-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr) auto;
+  gap: 0.5rem;
+  align-items: end;
+}
+
+.variant-row label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  font-size: 0.65rem;
+  font-weight: 500;
+}
+
+.variant-row input {
+  height: 32px;
+  box-sizing: border-box;
+}
+
+.variant-row button {
+  align-self: end;
+  height: 32px;
+  width: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+}
+
+@media (max-width: 640px) {
+  .variant-row {
+    grid-template-columns: 2fr 1fr 0.8fr 0.8fr auto !important;
+    grid-template-rows: auto !important;
+    gap: 0.4rem !important;
+    align-items: stretch !important;
+  }
+  
+  /* Make all labels smaller and fit in one row */
+  .variant-row label {
+    font-size: 0.6rem !important;
+    gap: 0.15rem !important;
+  }
+  
+  /* Make inputs smaller on mobile */
+  .variant-row input {
+    height: 28px !important;
+    font-size: 0.65rem !important;
+    padding: 0.3rem 0.4rem !important;
+  }
+  
+  /* Make remove button smaller on mobile */
+  .variant-row button {
+    height: 28px !important;
+    width: 28px !important;
+    font-size: 0.8rem !important;
+    align-self: end !important;
   }
 }

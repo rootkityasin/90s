@@ -6,6 +6,7 @@ import type { Product } from '../../lib/types';
 import { ProductCard } from './ProductCard';
 import { FadeUpDiv, Stagger } from './animations';
 import { motion } from 'framer-motion';
+import CustomSelect from './CustomSelect';
 
 type ProductsPageProps = {
   title: string;
@@ -111,24 +112,55 @@ export function ProductsPage({ title, description, mode }: ProductsPageProps) {
       <FadeUpDiv index={0}><h1 className='header-accent'>{title}</h1></FadeUpDiv>
   <FadeUpDiv index={1}><p style={{ maxWidth:640, fontSize:'.8rem', fontFamily:'var(--font-body)' }}>{description}</p></FadeUpDiv>
       {showPrice && (
-        <div style={{ display:'flex', flexWrap:'wrap', gap:'.8rem', marginTop:'1.4rem', alignItems:'center', background:'var(--color-surface)', padding:'1rem 1.2rem', borderRadius:16, boxShadow:'0 4px 14px -6px rgba(0,0,0,.25)' }}>
+  <div className="filter-bar" style={{ display:'flex', flexWrap:'wrap', gap:'.8rem', marginTop:'1.4rem', marginBottom:'1.2rem', alignItems:'center', background:'var(--color-surface)', padding:'1rem 1.2rem', borderRadius:16, boxShadow:'0 4px 14px -6px rgba(0,0,0,.25)' }}>
           <input
             placeholder='Search retail products'
             value={q}
             onChange={e=>setQ(e.target.value)}
             style={controlStyle}
             aria-label='Search products'
+            className="filter-input"
           />
-          <select value={cat} onChange={e=>setCat(e.target.value)} style={controlStyle} aria-label='Filter category'>
+          {/* Category filter - render both, toggle via CSS to avoid hydration mismatch */}
+          <div className="mobile-only" style={{ width:'100%' }}>
+            <CustomSelect
+              value={cat}
+              onChange={(value) => setCat(value)}
+              options={[
+                { value: 'all', label: 'All Categories' },
+                ...categories.map(c => ({ value: c, label: c }))
+              ]}
+              placeholder="Select category"
+              className="filter-cat"
+              aria-label="Filter category"
+            />
+          </div>
+          <select value={cat} onChange={e=>setCat(e.target.value)} style={controlStyle} aria-label='Filter category' className="filter-select filter-cat desktop-only">
             <option value='all'>All Categories</option>
             {categories.map(c => <option key={c} value={c}>{c}</option>)}
           </select>
-          <select value={sort} onChange={e=>setSort(e.target.value as any)} style={controlStyle} aria-label='Sort products'>
+          
+          {/* Sort filter - render both, toggle via CSS */}
+          <div className="mobile-only" style={{ width:'100%' }}>
+            <CustomSelect
+              value={sort}
+              onChange={(value) => setSort(value as any)}
+              options={[
+                { value: 'recent', label: 'Recent' },
+                { value: 'price-asc', label: 'Price ↑' },
+                { value: 'price-desc', label: 'Price ↓' }
+              ]}
+              placeholder="Sort by"
+              className="filter-sort"
+              aria-label="Sort products"
+            />
+          </div>
+          <select value={sort} onChange={e=>setSort(e.target.value as any)} style={controlStyle} aria-label='Sort products' className="filter-select filter-sort desktop-only">
             <option value='recent'>Recent</option>
             <option value='price-asc'>Price ↑</option>
             <option value='price-desc'>Price ↓</option>
           </select>
-          <span style={{ fontSize:'.65rem', letterSpacing:'.8px', textTransform:'uppercase', opacity:.75 }}>{products.length} items</span>
+          <span className="filter-count" style={{ fontSize:'.65rem', letterSpacing:'.8px', textTransform:'uppercase', opacity:.75 }}>{products.length} items</span>
         </div>
       )}
       <Stagger>

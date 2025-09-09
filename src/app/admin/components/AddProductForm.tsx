@@ -1,12 +1,13 @@
 "use client";
 import React, { useState } from 'react';
-import type { Product, Variant } from '../../../lib/types';
-import { fullEditProduct } from '../actions';
-import DeleteButton from './DeleteButton';
+import type { Variant } from '../../../lib/types';
+import { createProduct } from '../actions';
 
-export default function FullEditForm({ product }: { product: Product }) {
-  const [variants, setVariants] = useState<Variant[]>(product.variants);
-  const [images, setImages] = useState<string[]>(product.images || []);
+export default function AddProductForm({ onClose }: { onClose?: () => void }) {
+  const [variants, setVariants] = useState<Variant[]>([
+    { id: crypto.randomUUID(), sku:'', color:'', size:'', retailPriceBDT:0 }
+  ]);
+  const [images, setImages] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
 
   async function handleUpload(e: React.ChangeEvent<HTMLInputElement>) {
@@ -48,16 +49,23 @@ export default function FullEditForm({ product }: { product: Product }) {
   };
   const removeVariant = (i: number) => setVariants(v => v.filter((_,idx)=>idx!==i));
 
+  const handleSubmit = async (formData: FormData) => {
+    const result = await createProduct(formData);
+    if (result.product && onClose) {
+      onClose(); // Close modal on successful creation
+    }
+  };
+
   return (
-    <form action={fullEditProduct} style={{ display:'flex', flexDirection:'column', gap:'1.2rem', maxWidth:1000 }}>
-      <input type="hidden" name="productId" value={product.id} />
+    <form action={handleSubmit} style={{ display:'flex', flexDirection:'column', gap:'1.2rem', maxWidth:1000 }}>
       <div style={{ display:'grid', gap:'.8rem', gridTemplateColumns:'repeat(auto-fit,minmax(180px,1fr))' }}>
-        <label style={fieldLabelStyle}><span className="flab">Tag Code</span><input name="slug" defaultValue={product.slug} required style={inputBoxStyle} /></label>
-        <label style={fieldLabelStyle}><span className="flab">Title</span><input name="title" defaultValue={product.title} required style={inputBoxStyle} /></label>
-        <label style={fieldLabelStyle}><span className="flab">Category</span><input name="category" defaultValue={product.category} required style={inputBoxStyle} /></label>
-        <label style={fieldLabelStyle}><span className="flab">Hero Image</span><input name="heroImage" defaultValue={product.heroImage} required style={inputBoxStyle} /></label>
-        <label style={{ ...fieldLabelStyle, gridColumn:'1 / -1' }}><span className="flab">Description</span><textarea name="description" rows={3} defaultValue={product.description} style={{ ...inputBoxStyle, resize:'vertical' }} /></label>
+        <label style={fieldLabelStyle}><span className="flab">Tag Code</span><input name="slug" placeholder="auto-from-title" style={inputBoxStyle} /></label>
+        <label style={fieldLabelStyle}><span className="flab">Title</span><input name="title" required style={inputBoxStyle} /></label>
+        <label style={fieldLabelStyle}><span className="flab">Category</span><input name="category" required style={inputBoxStyle} /></label>
+        <label style={fieldLabelStyle}><span className="flab">Hero Image</span><input name="heroImage" placeholder="Will auto-set from first uploaded image" style={inputBoxStyle} /></label>
+        <label style={{ ...fieldLabelStyle, gridColumn:'1 / -1' }}><span className="flab">Description</span><textarea name="description" rows={3} placeholder="Product description..." style={{ ...inputBoxStyle, resize:'vertical' }} /></label>
       </div>
+      
       <div style={{ display:'grid', gap:'.75rem' }}>
         <div style={{ display:'flex', flexWrap:'wrap', gap:'.6rem', alignItems:'center' }}>
           <span style={{ fontSize:'.75rem', fontWeight:600 }}>Gallery Images</span>
@@ -67,7 +75,7 @@ export default function FullEditForm({ product }: { product: Product }) {
           </label>
           <span style={{ fontSize:'.55rem', opacity:.6 }}>({images.length} total)</span>
         </div>
-        {images.length === 0 && <p style={{ fontSize:'.65rem', opacity:.7 }}>No images yet. Use Upload Images to add.</p>}
+        {images.length === 0 && <p style={{ fontSize:'.65rem', opacity:.7 }}>No images yet. Use Upload Images to add product photos.</p>}
         <div style={{ display:'grid', gap:'.6rem', gridTemplateColumns:'repeat(auto-fill,minmax(140px,1fr))' }}>
           {images.map((img, idx) => (
             <div key={img+idx} style={{ position:'relative', border:'1px solid #333', borderRadius:10, padding:6, background:'#101418', display:'flex', flexDirection:'column', gap:4 }}>
@@ -103,7 +111,7 @@ export default function FullEditForm({ product }: { product: Product }) {
         <input type="hidden" name="images" value={images.join(',')} />
       </div>
 
-  <fieldset style={{ border:'1px solid #333', padding:'1rem', borderRadius:8 }}>
+      <fieldset style={{ border:'1px solid #333', padding:'1rem', borderRadius:8 }}>
         <legend style={{ fontSize:'.8rem', padding:'0 .4rem' }}>Variants</legend>
         <input type="hidden" name="variantCount" value={variants.length} />
         <div style={{ display:'grid', gap:'.75rem' }}>
@@ -138,9 +146,8 @@ export default function FullEditForm({ product }: { product: Product }) {
         </div>
       </fieldset>
 
-      <div style={{ display:'flex', gap:'.6rem', justifyContent:'space-between', alignItems: 'center' }}>
-        <DeleteButton productId={product.id} />
-        <button type="submit" style={buttonStyles.primary}>Save Changes</button>
+      <div style={{ display:'flex', gap:'.6rem', justifyContent:'flex-end', alignItems: 'center' }}>
+        <button type="submit" style={buttonStyles.primary}>Create Product</button>
       </div>
     </form>
   );
