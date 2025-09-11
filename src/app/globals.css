@@ -162,14 +162,18 @@ body::before {
 .grid { display:grid; gap:1.2rem; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); }
 
 .card {
+  --card-text:#13322c;
+  --card-heading:#0b0b0b;
+  --card-muted:#1f4e46;
   background: var(--color-surface);
-  padding: 1rem;
+  padding: .85rem .85rem .7rem;
   border-radius: var(--radius);
   position: relative;
   overflow: hidden;
   box-shadow: var(--shadow-card);
   border: 1px solid #e3c1a0;
   z-index: 0; /* Establish stacking context */
+  color:var(--card-text);
 }
 
 /* Add texture to all product cards */
@@ -189,7 +193,8 @@ body::before {
   position: relative;
   z-index: 1;
 }
-.card h3 { margin:.4rem 0 .6rem; font-family: var(--font-display); font-size:1.05rem; }
+.card h3 { margin:.35rem 0 .45rem; font-family: var(--font-display); font-size:1.02rem; color:var(--card-heading); }
+.card p { color:var(--card-muted); }
 .badge { position:absolute; top:.6rem; right:.6rem; background: var(--color-accent-2); color:#000; padding:.25rem .55rem; font-size:.65rem; border-radius:20px; letter-spacing:.5px; z-index: 2; /* Ensure badge is on top */ }
 
 /* Animations */
@@ -209,8 +214,8 @@ button:disabled { opacity:.5; cursor:not-allowed; }
 /* Mobile product grid tightening: aim ~6 items visible (2 cols x ~3 rows) */
 @media (max-width: 640px) {
   .grid { grid-template-columns: repeat(2, 1fr); gap: .6rem; }
-  .card { padding: .6rem; border-radius: 10px; }
-  .card h3 { font-size: .85rem; margin: .3rem 0 .4rem; }
+  .card { padding: .55rem .55rem .5rem; border-radius: 10px; }
+  .card h3 { font-size: .82rem; margin: .25rem 0 .35rem; }
   .card p { font-size: .65rem; line-height: 1.25; }
   .badge { top: .4rem; right: .4rem; padding: .15rem .4rem; font-size: .55rem; }
   /* ZoomImage container inside card (2nd div child due to badge being first div) */
