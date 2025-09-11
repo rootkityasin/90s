@@ -1,7 +1,6 @@
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { Hero } from './components';
-import Footer from './components/Footer';
 
 export default function Landing() {
   const role = cookies().get('role')?.value;
@@ -12,7 +11,7 @@ export default function Landing() {
       <div className="container" style={{ marginTop:'1rem', marginBottom:'3rem' }}>
         <Hero />
       </div>
-      <Footer />
+  {/* Footer injected by layout except on excluded routes */}
     </>
   );
 }

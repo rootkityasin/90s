@@ -21,7 +21,7 @@ export default function ProductPage({ params, searchParams }: { params: { slug: 
   const otherCategories = all.filter(sp => sp.category !== p.category && sp.slug !== p.slug);
   const suggestions = [...sameCategory.slice(0, 4), ...otherCategories].slice(0, 4);
   return (
-    <main className="container">
+    <main className="container" data-no-footer>
       <JsonLd data={productJsonLd({ name: p.title, description: p.description, slug: p.slug, image: p.heroImage, price: variant.retailPriceBDT, currency: 'BDT' })} />
   <ProductClient product={p} isWholesale={isWholesale} />
       {suggestions.length > 0 && (
