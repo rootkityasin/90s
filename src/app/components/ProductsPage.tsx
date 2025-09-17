@@ -164,7 +164,7 @@ export function ProductsPage({ title, description, mode }: ProductsPageProps) {
         </div>
       )}
       <Stagger>
-        <div className="grid" style={{ marginTop:'1.2rem' }}>
+  <div className="grid product-grid" style={{ marginTop:'1.2rem' }}>
       {products.slice(0, visible).map(p => (
             <ProductCard
               key={p.id}

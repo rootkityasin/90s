@@ -160,6 +160,10 @@ body::before {
 }
 
 .grid { display:grid; gap:1.2rem; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); }
+/* Dedicated product list grid */
+.product-grid { grid-template-columns: repeat(4, 1fr); }
+@media (max-width: 1200px) { .product-grid { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 960px) { .product-grid { grid-template-columns: repeat(2, 1fr); } }
 
 .card {
   --card-text:#13322c;
@@ -219,7 +223,7 @@ button:disabled { opacity:.5; cursor:not-allowed; }
   .card p { font-size: .65rem; line-height: 1.25; }
   .badge { top: .4rem; right: .4rem; padding: .15rem .4rem; font-size: .55rem; }
   /* ZoomImage container inside card (2nd div child due to badge being first div) */
-  .card > div:nth-of-type(2) { height: 110px !important; border-radius: 10px; }
+  .card > div:nth-of-type(2) { height: 150px !important; border-radius: 10px; }
 }
 
 /* Filter bar mobile ordering and custom select styling (mobile only) */

@@ -14,7 +14,7 @@ export default function SearchPage({ searchParams }: { searchParams: { q?: strin
         <h1 className="header-accent" style={{ fontSize:'2.1rem', margin:'0 0 1rem' }}>Search</h1>
         <p style={{ fontSize:'.8rem', margin:'0 0 1.4rem' }}>Query: <strong>{q || '—'}</strong></p>
         {q && results.length === 0 && <p style={{ fontSize:'.8rem' }}>No products found.</p>}
-        <div className="grid" style={{ marginTop:'1rem' }}>
+  <div className="grid product-grid" style={{ marginTop:'1rem' }}>
           {results.map(p => (
             <ProductCard key={p.id} p={p} showPrice={true} />
           ))}

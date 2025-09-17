@@ -23,7 +23,7 @@ export function ProductCard({ p, showPrice, token }: { p: Product; showPrice: bo
     >
       <div className="badge">{p.category}</div>
       {/* Using next/image would need explicit height/width; for simplicity using plain img now */}
-  <ZoomImage src={p.heroImage} alt={p.title} height={160} />
+  <ZoomImage src={p.heroImage} alt={p.title} height={240} noZoom />
       <h3>{p.title}</h3>
       <p style={{ fontSize:'.72rem', lineHeight:1.25, marginBottom:'.45rem' }}>{p.description}</p>
       {showPrice ? (

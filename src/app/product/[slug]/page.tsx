@@ -27,7 +27,7 @@ export default function ProductPage({ params, searchParams }: { params: { slug: 
       {suggestions.length > 0 && (
         <section style={{ marginTop:'2.2rem', marginBottom:'2.6rem' }}>
           <h2 className="header-accent" style={{ margin:'0 0 1rem', fontSize:'1.4rem' }}>You might also like</h2>
-          <div className="grid">
+          <div className="grid product-grid">
             {suggestions.map(sp => (
               <ProductCard
                 key={sp.id}

@@ -10,11 +10,12 @@ type ZoomImageProps = {
   zoomScale?: number;
   className?: string;
   style?: React.CSSProperties;
+  noZoom?: boolean; // if true, disable hover zoom
 };
 
 // Hover to zoom image. Moves focal point based on cursor position.
 // Disabled automatically on touch / coarse pointers.
-export function ZoomImage({ src, alt, height = 160, aspectRatio, radius = 8, zoomScale = 2.2, className, style }: ZoomImageProps) {
+export function ZoomImage({ src, alt, height = 160, aspectRatio, radius = 8, zoomScale = 2.2, className, style, noZoom }: ZoomImageProps) {
   const ref = React.useRef<HTMLDivElement | null>(null);
   const [origin, setOrigin] = React.useState('center center');
   const [hover, setHover] = React.useState(false);
@@ -44,9 +45,9 @@ export function ZoomImage({ src, alt, height = 160, aspectRatio, radius = 8, zoo
     height: '100%',
     objectFit: 'cover',
     display: 'block',
-    transition: hover ? 'transform .15s ease-out' : 'transform .6s cubic-bezier(.22,.68,0,1)',
-    transformOrigin: origin,
-    transform: hover && !isCoarse ? `scale(${zoomScale})` : 'scale(1)'
+  transition: hover ? 'transform .15s ease-out' : 'transform .6s cubic-bezier(.22,.68,0,1)',
+  transformOrigin: origin,
+  transform: hover && !isCoarse && !noZoom ? `scale(${zoomScale})` : 'scale(1)'
   };
 
   return (
@@ -54,9 +55,9 @@ export function ZoomImage({ src, alt, height = 160, aspectRatio, radius = 8, zoo
       ref={ref}
       className={className}
       style={containerStyle}
-      onMouseEnter={() => setHover(true)}
-      onMouseLeave={() => setHover(false)}
-      onMouseMove={onMove}
+  onMouseEnter={() => setHover(true)}
+  onMouseLeave={() => setHover(false)}
+  onMouseMove={noZoom ? undefined : onMove}
     >
       {/* plain img for now (could migrate to next/image) */}
       <img src={src} alt={alt} style={imgStyle} draggable={false} />
