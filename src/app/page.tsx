@@ -5,12 +5,10 @@ import { Hero } from './components';
 export default function Landing() {
   const role = cookies().get('role')?.value;
   if (role === 'retail') redirect('/retail');
-  if (role === 'client') redirect('/client');
+  if (role === 'client') redirect('/client/catalog');
   return (
     <>
-      <div className="container" style={{ marginTop:'1rem', marginBottom:'3rem' }}>
-        <Hero />
-      </div>
+      <Hero />
   {/* Footer injected by layout except on excluded routes */}
     </>
   );

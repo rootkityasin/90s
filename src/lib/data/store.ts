@@ -68,10 +68,10 @@ export function listSales() {
   return sales;
 }
 
-// Wholesale token: simple reversible format for demo (SKU + day + random)
-export function generateWholesaleToken(sku: string) { return sku; }
+// Client token: simple reversible format for demo (SKU only for now)
+export function generateClientToken(sku: string) { return sku; }
 
-// Simple demo users & roles (retail customer, client wholesale, admin)
+// Simple demo users & roles (retail customer, client, admin)
 export type DemoUser = { id: string; email: string; role: 'retail' | 'client' | 'admin' };
 const demoUserList: DemoUser[] = [
   { id: 'u1', email: 'retail@example.com', role: 'retail' },
@@ -80,3 +80,11 @@ const demoUserList: DemoUser[] = [
 ];
 export function findUserByEmail(email: string) { return demoUserList.find(u => u.email === email) || null; }
 export function allDemoUsers() { return demoUserList; }
+export function getProductBySKU(sku: string) {
+  for (const product of products) {
+    if (product.variants.some(v => v.sku === sku)) {
+      return product;
+    }
+  }
+  return null;
+}

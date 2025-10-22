@@ -52,7 +52,7 @@ export async function createProduct(formData: FormData) {
   });
   
   revalidatePath('/retail');
-  revalidatePath('/client');
+  revalidatePath('/client/catalog');
   revalidatePath('/admin');
   broadcastProductUpdate(product);
   return { product };
@@ -65,7 +65,7 @@ export async function editProduct(id: string, formData: FormData) {
   if (formData.get('heroImage')) patch.heroImage = formData.get('heroImage');
   const updated = updateProduct(id, patch);
   revalidatePath('/retail');
-  revalidatePath('/client');
+  revalidatePath('/client/catalog');
   if (updated) broadcastProductUpdate(updated);
   return { product: updated };
 }
@@ -101,7 +101,7 @@ export async function fullEditProduct(formData: FormData) {
   if (variants.length) patch.variants = variants;
   const updated = updateProduct(productId, patch);
   revalidatePath('/retail');
-  revalidatePath('/client');
+  revalidatePath('/client/catalog');
   revalidatePath('/admin');
   if (updated) broadcastProductUpdate(updated);
   return { product: updated };
@@ -111,9 +111,9 @@ export async function deleteProduct(productId: string) {
   if (!productId) return { error: 'Missing productId' };
   const success = deleteProductFromStore(productId);
   if (success) {
-    revalidatePath('/retail');
-    revalidatePath('/client');
-    revalidatePath('/admin');
+  revalidatePath('/retail');
+  revalidatePath('/client/catalog');
+  revalidatePath('/admin');
     broadcastProductDelete(productId);
     return { success: true };
   }

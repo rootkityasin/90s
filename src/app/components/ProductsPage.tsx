@@ -1,7 +1,7 @@
 "use client";
 import React from 'react';
 import { useSearchParams } from 'next/navigation';
-import { listProducts, generateWholesaleToken } from '../../lib/data/store';
+import { listProducts, generateClientToken } from '../../lib/data/store';
 import type { Product } from '../../lib/types';
 import { ProductCard } from './ProductCard';
 import { FadeUpDiv, Stagger } from './animations';
@@ -170,7 +170,7 @@ export function ProductsPage({ title, description, mode }: ProductsPageProps) {
               key={p.id}
               p={p}
               showPrice={showPrice}
-              token={!showPrice ? generateWholesaleToken(p.variants[0].sku) : undefined}
+              token={!showPrice ? generateClientToken(p.variants[0].sku) : undefined}
             />
           ))}
         </div>

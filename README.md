@@ -1,7 +1,7 @@
 # 90's Commerce (Prototype)
 
 Simple Next.js-only prototype showing:
-- Retail vs Client (wholesale) views separated by role (single domain) – client view hides price and shows SKU token.
+- Retail vs Client views separated by role (single domain) – client view hides price and shows SKU token.
 - Animated product cards (Framer Motion) kept lightweight.
 - Admin dashboard with basic metrics & product creation.
 - In-memory data store (replace with real DB later e.g. PostgreSQL + Prisma).
@@ -13,7 +13,7 @@ npm install
 npm run dev
 ```
 
-Open http://localhost:3000 then login. /retail for retail customers, /client for wholesale clients, /admin for dashboard.
+Open http://localhost:3000 then login. /retail for retail customers, /client for client partners, /admin for dashboard.
 
 ## Client Token Flow
 Token is simply the SKU (sample reference). Contact buttons (WhatsApp first) prefill message with SKU.
@@ -27,7 +27,7 @@ Edit `src/app/globals.css` to swap in your palette & font files. Keep contrast h
 3. Introduce pricing rules & per-customer token negotiation log.
 4. Add structured data & OpenGraph meta per product (partial demo in `product/[slug]`).
 5. Implement image optimization (switch img to next/image with width/height & priority as needed).
-6. Add caching (ISR) for product pages; keep wholesale tokens dynamic (no caching for token element).
+6. Add caching (ISR) for product pages; keep client tokens dynamic (no caching for token element).
 7. Add robust admin edit & variant management (editProduct server action placeholder ready).
 8. Implement analytics aggregation jobs instead of random demo data.
 
@@ -36,7 +36,7 @@ Single domain using middleware to gate sections by role; can migrate to subdomai
 
 ## Performance Notes
 - Framer Motion only wraps cards; keep dependency minimal.
-- Use dynamic = 'force-dynamic' on wholesale / retail list for now; later switch to ISR for stable catalog & client-side generate token.
+- Use dynamic = 'force-dynamic' on client / retail list for now; later switch to ISR for stable catalog & client-side generate token.
 - Add Lighthouse & Web Vitals tracking early.
 
 ## Licensing

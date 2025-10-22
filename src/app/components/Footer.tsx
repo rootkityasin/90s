@@ -1,6 +1,7 @@
 "use client";
 import React from 'react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { listProducts } from '../../lib/data/store';
 import { WHATSAPP_PHONE, FACEBOOK_PAGE_URL, INSTAGRAM_URL } from '../../lib/config';
 // Reuse same SVG icons as hero for consistency
@@ -16,12 +17,19 @@ const icons = {
   )
 };
 
-export default function Footer() {
+export default function Footer({ role, clientAccess }: { role?: string; clientAccess?: boolean }) {
   const year = new Date().getFullYear();
   const categories = React.useMemo(
     () => Array.from(new Set(listProducts().map(p => p.category))).sort(),
     []
   );
+  const pathname = usePathname();
+  const inClientMode = pathname.startsWith('/client') || role === 'client' || clientAccess;
+  const shopHref = inClientMode ? '/client/catalog' : '/retail';
+  const searchHref = inClientMode ? '/client/search' : '/search';
+  const categoryBase = inClientMode ? '/client/catalog' : '/retail';
+  const aboutHref = inClientMode ? '/client/about' : '/about';
+  const contactHref = inClientMode ? '/client/contact' : '/contact';
 
   return (
     <footer className="site-footer">
@@ -39,10 +47,10 @@ export default function Footer() {
         <nav className="footer-block">
           <h4 className="footer-head">Navigate</h4>
           <ul>
-            <li><Link href="/retail">Shop</Link></li>
-            <li><Link href="/about">About</Link></li>
-            <li><Link href="/contact">Contact</Link></li>
-            <li><Link href="/search">Search</Link></li>
+            <li><Link href={shopHref}>Shop</Link></li>
+            <li><Link href={aboutHref}>About</Link></li>
+            <li><Link href={contactHref}>Contact</Link></li>
+            <li><Link href={searchHref}>Search</Link></li>
           </ul>
         </nav>
 
@@ -50,7 +58,7 @@ export default function Footer() {
           <h4 className="footer-head">Categories</h4>
           <ul>
             {categories.slice(0,8).map(c=> (
-              <li key={c}><Link href={`/retail?category=${c}`}>{c}</Link></li>
+              <li key={c}><Link href={`${categoryBase}?category=${encodeURIComponent(c)}`}>{c}</Link></li>
             ))}
           </ul>
         </div>

@@ -4,7 +4,11 @@ import Link from 'next/link';
 import { listProducts } from '../../lib/data/store';
 import { usePathname } from 'next/navigation';
 
-export function CategoryDropdown() {
+type CategoryDropdownProps = {
+  target?: 'retail' | 'client';
+};
+
+export function CategoryDropdown({ target }: CategoryDropdownProps = {}) {
   const [isOpen, setIsOpen] = React.useState(false);
   const rootRef = React.useRef<HTMLDivElement | null>(null);
   const pathname = usePathname();
@@ -18,6 +22,13 @@ export function CategoryDropdown() {
     const all = listProducts();
     setCats(Array.from(new Set(all.map(p => p.category))).sort());
   }, []);
+
+  const resolvedTarget = React.useMemo(() => {
+    if (target) return target;
+    return pathname.startsWith('/client') ? 'client' : 'retail';
+  }, [target, pathname]);
+
+  const baseHref = resolvedTarget === 'client' ? '/client/catalog' : '/retail';
 
   const labelize = (key: string) => {
     switch (key) {
@@ -80,12 +91,12 @@ export function CategoryDropdown() {
         <div className="category-menu">
           <ul>
             <li>
-              <Link href="/retail" onClick={closeDropdown} className="category-link">All Products</Link>
+              <Link href={baseHref} onClick={closeDropdown} className="category-link">All Products</Link>
             </li>
             {cats.map((key) => (
               <li key={key}>
                 <Link 
-                  href={`/retail?category=${encodeURIComponent(key)}`}
+                  href={`${baseHref}?category=${encodeURIComponent(key)}`}
                   onClick={closeDropdown}
                   className="category-link"
                 >

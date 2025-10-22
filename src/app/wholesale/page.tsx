@@ -1,11 +1,7 @@
-import { ProductsPage } from '../components';
+import { redirect } from 'next/navigation';
 
-export default function Wholesale() {
-  return (
-    <ProductsPage
-      title="90's Wholesale"
-      description="Prices hidden. Each card shows a token that a buyer can send via social media to start a contract conversation."
-      mode="client"
-    />
-  );
+export const metadata = { title: 'Client Catalog Redirect' };
+
+export default function DeprecatedWholesalePage() {
+  redirect('/client/catalog');
 }

@@ -1,11 +1,14 @@
 "use client";
 import React from 'react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { useCart } from './CartContext';
 import Lottie from 'lottie-react';
 import animationData from '../../../../public/assets/animation/Add To Cart Success black.json';
 
 export function FloatingCartButton() {
+  const pathname = usePathname();
+  if (pathname?.startsWith('/client') || pathname?.startsWith('/admin')) return null;
   const { totalQty } = useCart();
   const playerRef = React.useRef<any>(null);
   React.useEffect(()=>{
@@ -43,7 +46,7 @@ export function FloatingCartButton() {
 const wrapperStyle: React.CSSProperties = {
   position:'fixed',
   right:'1.2rem',
-  bottom:'1.2rem',
+  bottom:'3rem',
   width:60,
   height:60,
   borderRadius:'50%',

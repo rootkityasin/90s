@@ -7,6 +7,7 @@ import AdminDashboardCharts from './components/AdminDashboardCharts';
 import FullEditForm from './components/FullEditForm';
 import AddProductForm from './components/AddProductForm';
 import CustomSelect from '../components/CustomSelect';
+import TokenLookupModal from './components/TokenLookupModal';
 
 type Props = {
   productsInitial: Product[];
@@ -34,6 +35,8 @@ export default function AdminClient({ productsInitial, sales }: Props) {
   });
   const [editing, setEditing] = useState<any | null>(null);
   const [showAddProduct, setShowAddProduct] = useState(false);
+  const [showTokenLookup, setShowTokenLookup] = useState(false);
+
   return (
     <main className="container">
       <h1 className="header-accent" style={{ marginBottom: '.6rem' }}>Admin Dashboard</h1>
@@ -41,23 +44,40 @@ export default function AdminClient({ productsInitial, sales }: Props) {
 
       <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginTop:'2rem' }}>
         <h2 className="header-accent" style={{ margin:0, fontSize:'2rem' }}>Products</h2>
-        <button 
-          onClick={() => setShowAddProduct(true)}
-          style={{ 
-            background: 'linear-gradient(135deg, #008F7D 0%, #00A38A 100%)',
-            color: '#fff',
-            border: 'none',
-            borderRadius: 8,
-            padding: '.75rem 1.2rem',
-            fontSize: '.8rem',
-            fontWeight: 600,
-            cursor: 'pointer',
-            transition: 'all 0.2s ease',
-            boxShadow: '0 2px 8px rgba(0,143,125,0.3)',
-          }}
-        >
-          Add Product
-        </button>
+        <div style={{ display: 'flex', gap: '1rem' }}>
+          <button 
+            onClick={() => setShowTokenLookup(true)}
+            style={{ 
+              background: 'var(--color-surface)',
+              color: 'var(--color-text)',
+              border: '1px solid var(--color-border)',
+              borderRadius: 8,
+              padding: '.75rem 1.2rem',
+              fontSize: '.8rem',
+              fontWeight: 600,
+              cursor: 'pointer',
+            }}
+          >
+            Token Lookup
+          </button>
+          <button 
+            onClick={() => setShowAddProduct(true)}
+            style={{ 
+              background: 'linear-gradient(135deg, #008F7D 0%, #00A38A 100%)',
+              color: '#fff',
+              border: 'none',
+              borderRadius: 8,
+              padding: '.75rem 1.2rem',
+              fontSize: '.8rem',
+              fontWeight: 600,
+              cursor: 'pointer',
+              transition: 'all 0.2s ease',
+              boxShadow: '0 2px 8px rgba(0,143,125,0.3)',
+            }}
+          >
+            Add Product
+          </button>
+        </div>
       </div>
   <div className="filter-bar" style={{ display:'flex', flexWrap:'wrap', gap:'.8rem', marginTop:'1.4rem', marginBottom:'1.2rem', alignItems:'center', background:'var(--color-surface)', padding:'1rem 1.2rem', borderRadius:16, boxShadow:'0 4px 14px -6px rgba(0,0,0,.25)' }}>
         <input
@@ -108,7 +128,7 @@ export default function AdminClient({ productsInitial, sales }: Props) {
         </select>
         <span className="filter-count" style={{ fontSize:'.65rem', letterSpacing:'.8px', textTransform:'uppercase', opacity:.75 }}>{products.length} items</span>
       </div>
-      <Suspense>
+      <Suspense fallback={<p>Loading products...</p>}>
         <AdminAnimatedGrid products={products} onFullEdit={p=>setEditing(p)} />
       </Suspense>
       {editing && (
@@ -127,6 +147,27 @@ export default function AdminClient({ productsInitial, sales }: Props) {
             <button onClick={()=>setShowAddProduct(false)} style={{ position:'absolute', top:8, right:8, background:'#222', color:'#fff', border:'none', borderRadius:6, padding:'.4rem .6rem', fontSize:'.65rem' }}>Close</button>
             <h2 style={{ marginTop:0 }}>Add New Product</h2>
             <AddProductForm onClose={() => setShowAddProduct(false)} />
+          </div>
+        </div>
+      )}
+      {showTokenLookup && (
+        <div
+          style={{ position:'fixed', inset:0, background:'rgba(0,0,0,.65)', backdropFilter:'blur(6px)', display:'flex', alignItems:'center', justifyContent:'center', padding:'2rem 1rem', zIndex:220 }}
+          onClick={()=>setShowTokenLookup(false)}
+        >
+          <div
+            style={{ background:'#f8cfa4', padding:'2.2rem 2.4rem 2rem', borderRadius:26, width:'min(92vw, 520px)', position:'relative', boxShadow:'0 40px 80px -45px rgba(0,0,0,.85)', border:'1px solid rgba(0,0,0,0.08)' }}
+            onClick={e=>e.stopPropagation()}
+          >
+            <button
+              onClick={()=>setShowTokenLookup(false)}
+              style={{ position:'absolute', top:12, right:14, background:'#c0392b', color:'#fff', border:'none', borderRadius:'50%', width:38, height:38, display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', boxShadow:'0 18px 34px -18px rgba(192,57,43,0.55)', fontSize:'1.35rem', fontWeight:600, lineHeight:1 }}
+              aria-label="Close token lookup"
+            >
+              ×
+            </button>
+            <h2 style={{ margin:'0 0 1.2rem', fontSize:'1.35rem', letterSpacing:'0.8px' }}>Token Lookup</h2>
+            <TokenLookupModal />
           </div>
         </div>
       )}

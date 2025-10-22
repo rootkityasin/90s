@@ -3,12 +3,13 @@ import React from 'react';
 import Link from 'next/link';
 import { Logo } from './Logo';
 import { CategoryDropdown } from './CategoryDropdown';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import Lottie from 'lottie-react';
 import searchAnimation from '../../../public/assets/animation/search.json';
 
-export function NavBar({ role }: { role?: string }) {
+export function NavBar({ role, clientAccess }: { role?: string; clientAccess?: boolean }) {
   const router = useRouter();
+  const pathname = usePathname();
   const [query, setQuery] = React.useState('');
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
   const lottieRef = React.useRef<any>(null);
@@ -43,6 +44,23 @@ export function NavBar({ role }: { role?: string }) {
     }
   }, []);
 
+  const isClientContext = pathname.startsWith('/client');
+  const inClientMode = isClientContext || role === 'client' || clientAccess;
+  const logoHref = (() => {
+    if (role === 'admin') return '/admin';
+    if (inClientMode) return '/client';
+    return '/';
+  })();
+  const homeHref = (() => {
+    if (role === 'admin') return '/admin';
+    if (inClientMode) return '/client';
+    return '/';
+  })();
+  const dropdownTarget = inClientMode ? 'client' : 'retail';
+  const searchBase = inClientMode ? '/client/search' : '/search';
+  const aboutHref = inClientMode ? '/client/about' : '/about';
+  const contactHref = inClientMode ? '/client/contact' : '/contact';
+
   function submit(e: React.FormEvent) {
     e.preventDefault();
     const term = query.trim();
@@ -52,7 +70,7 @@ export function NavBar({ role }: { role?: string }) {
       document.activeElement.blur();
     }
     if (!term) return;
-    router.push(`/search?q=${encodeURIComponent(term)}`);
+    router.push(`${searchBase}?q=${encodeURIComponent(term)}`);
   }
 
   function toggleMobileMenu() {
@@ -71,19 +89,20 @@ export function NavBar({ role }: { role?: string }) {
     document.body.classList.remove('nav-open');
   }
 
+
   return (
     <nav className="site-nav primary-nav">
       <div className="nav-left">
-        <Link href="/" className="logo" aria-label="Go home" onClick={closeMobileMenu}>
+        <Link href={logoHref} className="logo" aria-label="Go home" onClick={closeMobileMenu}>
           <span className="logo-text">90's Legacy</span>
         </Link>
       </div>
       <div className="nav-center">
         <ul className="nav-menu" role="menubar">
-          <li><Link href="/" role="menuitem" onClick={closeMobileMenu}>Home</Link></li>
-          <li><CategoryDropdown /></li>
-          <li><Link href="/about" role="menuitem" onClick={closeMobileMenu}>About</Link></li>
-          <li><Link href="/contact" role="menuitem" onClick={closeMobileMenu}>Contact</Link></li>
+          <li><Link href={homeHref} role="menuitem" onClick={closeMobileMenu}>Home</Link></li>
+          <li><CategoryDropdown target={dropdownTarget} /></li>
+          <li><Link href={aboutHref} role="menuitem" onClick={closeMobileMenu}>About</Link></li>
+          <li><Link href={contactHref} role="menuitem" onClick={closeMobileMenu}>Contact</Link></li>
         </ul>
       </div>
       <div className="nav-right" style={{ display:'flex', alignItems:'center', gap:'.9rem' }}>
@@ -113,7 +132,7 @@ export function NavBar({ role }: { role?: string }) {
 
         {/* Mobile-only: show Categories button instead of search */}
         <div className="mobile-only">
-          <CategoryDropdown />
+          <CategoryDropdown target={dropdownTarget} />
         </div>
         {/* Mobile hamburger menu button */}
         <button 
@@ -149,9 +168,9 @@ export function NavBar({ role }: { role?: string }) {
             aria-label="Search products"
           />
         </form>
-        <Link href="/" onClick={closeMobileMenu}>Home</Link>
-        <Link href="/about" onClick={closeMobileMenu}>About</Link>
-        <Link href="/contact" onClick={closeMobileMenu}>Contact</Link>
+        <Link href={homeHref} onClick={closeMobileMenu}>Home</Link>
+  <Link href={aboutHref} onClick={closeMobileMenu}>About</Link>
+  <Link href={contactHref} onClick={closeMobileMenu}>Contact</Link>
       </div>
     </nav>
   );

@@ -1,23 +1,43 @@
 import { NextResponse, type NextRequest } from 'next/server';
-
-const PROTECTED: Record<string, string[]> = {
-  '/retail': ['retail','admin'],
-  '/client': ['client','admin'],
-  '/admin': ['admin']
-};
+import { CLIENT_COOKIE_NAME } from './src/lib/auth/clientGate';
 
 export function middleware(req: NextRequest) {
   const role = req.cookies.get('role')?.value;
+  const clientAccess = req.cookies.get(CLIENT_COOKIE_NAME)?.value === 'granted';
   const { pathname } = req.nextUrl;
-  for (const base of Object.keys(PROTECTED)) {
-    if (pathname === base || pathname.startsWith(base + '/')) {
-      if (!role || !PROTECTED[base].includes(role)) {
-        const url = req.nextUrl.clone();
-        url.pathname = '/login';
-        return NextResponse.redirect(url);
-      }
+
+  if (pathname === '/client') {
+    return NextResponse.next();
+  }
+
+  if (pathname === '/admin' || pathname.startsWith('/admin/')) {
+    if (role !== 'admin') {
+      const url = req.nextUrl.clone();
+      url.pathname = '/login';
+      return NextResponse.redirect(url);
+    }
+    return NextResponse.next();
+  }
+
+  if (pathname === '/retail' || pathname.startsWith('/retail/')) {
+    if (!role || (role !== 'retail' && role !== 'admin')) {
+      const url = req.nextUrl.clone();
+      url.pathname = '/login';
+      return NextResponse.redirect(url);
+    }
+    return NextResponse.next();
+  }
+
+  if (pathname !== '/client' && (pathname === '/client/catalog' || pathname.startsWith('/client/'))) {
+    const hasRoleBypass = role === 'admin';
+    if (!hasRoleBypass && !clientAccess) {
+      const url = req.nextUrl.clone();
+      url.pathname = '/client';
+      url.searchParams.set('redirect', pathname);
+      return NextResponse.redirect(url);
     }
   }
+
   return NextResponse.next();
 }
 

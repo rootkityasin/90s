@@ -8,7 +8,7 @@ import { ZoomImage } from './ZoomImage';
 
 export function ProductCard({ p, showPrice, token }: { p: Product; showPrice: boolean; token?: string }) {
   const firstVariant = p.variants[0];
-  const href = `/product/${p.slug}${showPrice ? '' : '?mode=client'}`;
+  const href = showPrice ? `/product/${p.slug}` : `/client/product/${p.slug}`;
   return (
     <Link href={href} style={{ textDecoration:'none' }}>
     <motion.div
@@ -24,10 +24,19 @@ export function ProductCard({ p, showPrice, token }: { p: Product; showPrice: bo
       <div className="badge">{p.category}</div>
       {/* Using next/image would need explicit height/width; for simplicity using plain img now */}
   <ZoomImage src={p.heroImage} alt={p.title} height={240} noZoom />
-      <h3>{p.title}</h3>
+    <h3 className="product-title-font">{p.title}</h3>
       <p style={{ fontSize:'.72rem', lineHeight:1.25, marginBottom:'.45rem' }}>{p.description}</p>
       {showPrice ? (
-        <p style={{ fontWeight:600, margin:0, color:'var(--color-accent-2)' }}>৳ {firstVariant.retailPriceBDT}</p>
+        <p
+          style={{
+            fontWeight:700,
+            margin:0,
+            color:'#ff5a0a',
+            letterSpacing:'0.02em'
+          }}
+        >
+          ৳ {firstVariant.retailPriceBDT}
+        </p>
       ) : token ? (
         <p style={{ fontSize:'.65rem', margin:0 }}>Token: <strong>{token}</strong></p>
       ) : null}

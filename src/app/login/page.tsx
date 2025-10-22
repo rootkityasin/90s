@@ -11,7 +11,7 @@ export default function Login() {
         <label style={{ display:'grid', gap:'.3rem' }}>Role
           <select name="role" defaultValue="retail" style={{ padding:'.55rem', borderRadius:8 }}>
             <option value="retail">Retail Customer</option>
-            <option value="client">Client (Wholesale)</option>
+            <option value="client">Client Access</option>
             <option value="admin">Admin</option>
           </select>
         </label>
