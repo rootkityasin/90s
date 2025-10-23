@@ -9,6 +9,7 @@ import { CartProvider } from './components/cart/CartContext';
 import { FloatingCartButton } from './components/cart/FloatingCartButton';
 import BodyWrapper from './components/BodyWrapper';
 import { CLIENT_COOKIE_NAME } from '../lib/auth/clientGate';
+import { Analytics } from '@vercel/analytics/next';
 
 export const metadata: Metadata = {
   title: "90's Commerce",
@@ -41,6 +42,7 @@ export default function RootLayout({
           {!footerExcluded && <Footer role={role} clientAccess={clientAccess} />}
           <FloatingCartButton />
           <SpeedInsights />
+          <Analytics />
         </CartProvider>
       </BodyWrapper>
     </html>
