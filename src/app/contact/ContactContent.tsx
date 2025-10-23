@@ -6,7 +6,7 @@ export function ContactContent() {
   return (
     <div className="container" style={{ marginTop: '1.6rem', marginBottom: '4rem' }}>
       <div className="panel textured" style={{ padding: '2.2rem 2.4rem 2.6rem', maxWidth: 880, margin: '0 auto' }}>
-        <h1 className="header-accent" style={{ fontSize: '2.2rem', margin: '0 0 1.2rem' }}>Contact</h1>
+        <h1 className="hero-headline about-hero-title">Contact</h1>
         <p style={{ fontSize: '.85rem', lineHeight: 1.5, maxWidth: 640 }}>
           Reach out for sourcing briefs, sampling windows, pricing questions or collaboration proposals. Fastest response via WhatsApp. Provide SKU/token references if you already explored product listings.
         </p>

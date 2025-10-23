@@ -6,5 +6,5 @@ export const metadata = { title: "About | Client View" };
 
 export default async function ClientAboutPage() {
   await enforceClientAccess('/client/about');
-  return <AboutContent />;
+  return <AboutContent audience="client" />;
 }

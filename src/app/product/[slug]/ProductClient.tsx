@@ -47,7 +47,9 @@ export default function ProductClient({ product, isClient }: { product: Product;
       </div>
       <div style={{ flex:1, minWidth:300 }}>
         <h1 className='header-accent' style={{ marginTop:0 }}>{p.title}</h1>
-        <p style={{ fontSize:'.8rem', lineHeight:1.45 }}>{p.description}</p>
+        {p.description?.trim() && (
+          <p style={{ fontSize:'.8rem', lineHeight:1.45 }}>{p.description}</p>
+        )}
         <div style={{ background:'var(--color-surface)', padding:'1rem 1.1rem', borderRadius:16, margin:'1rem 0', fontSize:'.65rem', letterSpacing:'.5px', lineHeight:1.4 }}>
           <strong style={{ fontSize:'.7rem' }}>FABRIC & DETAILS</strong><br />
           95% Cotton / 5% Elastane (example) • Pre-washed • Colorfast • Soft hand-feel.<br />

@@ -1,5 +1,6 @@
 import './globals.css';
 import React from 'react';
+import type { Metadata } from 'next';
 import { cookies } from 'next/headers';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 import { NavBar } from './components';
@@ -9,9 +10,12 @@ import { FloatingCartButton } from './components/cart/FloatingCartButton';
 import BodyWrapper from './components/BodyWrapper';
 import { CLIENT_COOKIE_NAME } from '../lib/auth/clientGate';
 
-export const metadata = {
+export const metadata: Metadata = {
   title: "90's Commerce",
-  description: "Regional fashion platform for clients"
+  description: "Regional fashion platform for clients",
+  icons: {
+    icon: '/uploads/1757075817333-BB9B9396-9B40-47FC-AB87-B6AB4D80698C.png'
+  }
 };
 
 export default function RootLayout({

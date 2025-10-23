@@ -193,6 +193,7 @@ export interface GeneratedProductData {
   title: string;
   images: string[];
   heroImage: string;
+  description?: string;
 }
 
 export function generateProductsFromManifest(): GeneratedProductData[] {
@@ -207,7 +208,8 @@ export function generateProductsFromManifest(): GeneratedProductData[] {
       slug: g.slug,
       title: g.title,
       images: g.files.map(f => `/assets/products/${f}`),
-      heroImage: `/assets/products/${g.files[0]}`
+      heroImage: `/assets/products/${g.files[0]}`,
+      description: g.description
     });
   }
 

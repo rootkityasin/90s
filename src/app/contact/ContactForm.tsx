@@ -14,7 +14,7 @@ export default function ContactForm() {
       <label style={{ gridColumn:'1 / -1', display:'grid', gap:'.3rem', fontSize:'.65rem', letterSpacing:1, textTransform:'uppercase' }}>Message
         <textarea rows={5} placeholder="Brief project details, quantities, target cost, timeline..."></textarea>
       </label>
-      <button type="submit" style={{ width:'fit-content', padding:'.7rem 1.4rem', fontSize:'.75rem', letterSpacing:'.8px' }}>Send (stub)</button>
+      <button type="submit" style={{ width:'fit-content', padding:'.7rem 1.4rem', fontSize:'.75rem', letterSpacing:'.8px' }}>Send</button>
     </form>
   );
 }

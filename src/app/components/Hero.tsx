@@ -11,7 +11,7 @@ const heroLead = {
   title:'Workwear Season',
   ctaLabel:'Shop Now',
   ctaHref:'/retail?category=cargos',
-  image:'/photoshoot/touch_the_earth.jpg',
+  image:'/photoshoot/temp.jpg',
   alt:'Workwear season look in camel jacket'
 };
 
@@ -215,16 +215,18 @@ const heroLeadStyles = {
 
 export function Hero() {
   const categoryGridStyles = React.useMemo(() => ({
-    width:'100vw',
-    maxWidth:'100vw',
+    width:'100%',
+    maxWidth:'min(920px, 94vw)',
     display:'grid',
     gridTemplateColumns: 'repeat(2, 1fr)',
     gap:0,
-    border:'none',
-    overflow:'hidden',
-    marginTop:0,
-    marginLeft:'calc(50% - 50vw)',
-    marginRight:'calc(50% - 50vw)'
+  overflow:'hidden',
+    marginTop:'1.6rem',
+    marginLeft:'auto',
+    marginRight:'auto',
+    borderRadius:26,
+    boxShadow:'0 32px 56px -36px rgba(0,0,0,0.4)',
+    border:'1px solid rgba(0,0,0,0.08)'
   }), []);
   return (
     <motion.section
@@ -296,7 +298,7 @@ export function Hero() {
               alt={card.alt}
               style={{
                 width:'100%',
-                height: '50vw',
+                height:'clamp(220px, 38vw, 360px)',
                 objectFit:'cover',
                 display:'block',
                 margin:0,

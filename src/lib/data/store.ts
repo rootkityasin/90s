@@ -15,7 +15,7 @@ let products: Product[] = manifestProducts.map(mp => ({
   id: randomUUID(),
   slug: mp.slug,
   title: mp.title,
-  description: `${mp.title} (${mp.category}).`,
+  description: mp.description || '',
   category: mp.category,
   heroImage: mp.heroImage,
   images: mp.images,

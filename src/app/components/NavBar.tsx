@@ -7,7 +7,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import Lottie from 'lottie-react';
 import searchAnimation from '../../../public/assets/animation/search.json';
 
-export function NavBar({ role, clientAccess }: { role?: string; clientAccess?: boolean }) {
+export function NavBar({ role, clientAccess: _clientAccess }: { role?: string; clientAccess?: boolean }) {
   const router = useRouter();
   const pathname = usePathname();
   const [query, setQuery] = React.useState('');
@@ -45,21 +45,20 @@ export function NavBar({ role, clientAccess }: { role?: string; clientAccess?: b
   }, []);
 
   const isClientContext = pathname.startsWith('/client');
-  const inClientMode = isClientContext || role === 'client' || clientAccess;
-  const logoHref = (() => {
-    if (role === 'admin') return '/admin';
-    if (inClientMode) return '/client';
-    return '/';
+  const isAdminContext = pathname.startsWith('/admin');
+
+  const navContext: 'retail' | 'client' | 'admin' = (() => {
+    if (role === 'admin' || isAdminContext) return 'admin';
+    if (isClientContext) return 'client';
+    return 'retail';
   })();
-  const homeHref = (() => {
-    if (role === 'admin') return '/admin';
-    if (inClientMode) return '/client';
-    return '/';
-  })();
-  const dropdownTarget = inClientMode ? 'client' : 'retail';
-  const searchBase = inClientMode ? '/client/search' : '/search';
-  const aboutHref = inClientMode ? '/client/about' : '/about';
-  const contactHref = inClientMode ? '/client/contact' : '/contact';
+
+  const logoHref = navContext === 'admin' ? '/admin' : navContext === 'client' ? '/client' : '/';
+  const homeHref = logoHref;
+  const dropdownTarget = navContext === 'client' ? 'client' : 'retail';
+  const searchBase = navContext === 'client' ? '/client/search' : '/search';
+  const aboutHref = navContext === 'client' ? '/client/about' : '/about';
+  const contactHref = navContext === 'client' ? '/client/contact' : '/contact';
 
   function submit(e: React.FormEvent) {
     e.preventDefault();

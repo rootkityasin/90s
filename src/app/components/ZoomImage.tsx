@@ -19,14 +19,30 @@ export function ZoomImage({ src, alt, height = 160, aspectRatio, radius = 8, zoo
   const ref = React.useRef<HTMLDivElement | null>(null);
   const [origin, setOrigin] = React.useState('center center');
   const [hover, setHover] = React.useState(false);
-  const isCoarse = typeof window !== 'undefined' && matchMedia('(pointer:coarse)').matches;
+  const isCoarseRef = React.useRef(false);
 
-  function onMove(e: React.MouseEvent) {
+  React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+      isCoarseRef.current = matchMedia('(pointer:coarse)').matches;
+    }
+  }, []);
+
+  function updateOrigin(clientX: number, clientY: number) {
     if (!ref.current) return;
     const rect = ref.current.getBoundingClientRect();
-    const x = ((e.clientX - rect.left) / rect.width) * 100;
-    const y = ((e.clientY - rect.top) / rect.height) * 100;
+    const x = ((clientX - rect.left) / rect.width) * 100;
+    const y = ((clientY - rect.top) / rect.height) * 100;
     setOrigin(`${x.toFixed(2)}% ${y.toFixed(2)}%`);
+  }
+
+  function onMouseMove(e: React.MouseEvent<HTMLDivElement>) {
+    updateOrigin(e.clientX, e.clientY);
+  }
+
+  function onTouchMove(e: React.TouchEvent<HTMLDivElement>) {
+    if (e.touches.length === 0) return;
+    const touch = e.touches[0];
+    updateOrigin(touch.clientX, touch.clientY);
   }
 
   const containerStyle: React.CSSProperties = {
@@ -36,7 +52,7 @@ export function ZoomImage({ src, alt, height = 160, aspectRatio, radius = 8, zoo
     height,
     ...(aspectRatio ? { aspectRatio } : {}),
     background: '#111',
-    cursor: isCoarse ? 'default' : 'zoom-in',
+    cursor: isCoarseRef.current ? 'default' : 'zoom-in',
     ...style
   };
 
@@ -45,9 +61,9 @@ export function ZoomImage({ src, alt, height = 160, aspectRatio, radius = 8, zoo
     height: '100%',
     objectFit: 'cover',
     display: 'block',
-  transition: hover ? 'transform .15s ease-out' : 'transform .6s cubic-bezier(.22,.68,0,1)',
-  transformOrigin: origin,
-  transform: hover && !isCoarse && !noZoom ? `scale(${zoomScale})` : 'scale(1)'
+    transition: hover ? 'transform .15s ease-out' : 'transform .6s cubic-bezier(.22,.68,0,1)',
+    transformOrigin: origin,
+    transform: hover && !noZoom ? `scale(${zoomScale})` : 'scale(1)'
   };
 
   return (
@@ -55,9 +71,19 @@ export function ZoomImage({ src, alt, height = 160, aspectRatio, radius = 8, zoo
       ref={ref}
       className={className}
       style={containerStyle}
-  onMouseEnter={() => setHover(true)}
-  onMouseLeave={() => setHover(false)}
-  onMouseMove={noZoom ? undefined : onMove}
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+      onMouseMove={noZoom ? undefined : onMouseMove}
+      onTouchStart={noZoom ? undefined : (event) => {
+        setHover(true);
+        if (event.touches.length > 0) {
+          const touch = event.touches[0];
+          updateOrigin(touch.clientX, touch.clientY);
+        }
+      }}
+      onTouchEnd={noZoom ? undefined : () => setHover(false)}
+      onTouchCancel={noZoom ? undefined : () => setHover(false)}
+      onTouchMove={noZoom ? undefined : onTouchMove}
     >
       {/* plain img for now (could migrate to next/image) */}
       <img src={src} alt={alt} style={imgStyle} draggable={false} />
