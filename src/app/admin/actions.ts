@@ -8,6 +8,8 @@ export async function createProduct(formData: FormData) {
   if (!title) return { error: 'Title required' };
   const slug = (formData.get('slug') || title.toLowerCase().replace(/[^a-z0-9]+/g,'-')).toString();
   const description = (formData.get('description') || '').toString();
+  const fabricDetails = (formData.get('fabricDetails') || '').toString();
+  const careInstructions = (formData.get('careInstructions') || '').toString();
   const category = (formData.get('category') || '').toString();
   
   // Handle images (comma separated)
@@ -45,6 +47,8 @@ export async function createProduct(formData: FormData) {
     slug, 
     title, 
     description, 
+    fabricDetails,
+    careInstructions,
     category, 
     heroImage,
     images,
@@ -62,6 +66,8 @@ export async function editProduct(id: string, formData: FormData) {
   const patch: any = {};
   if (formData.get('title')) patch.title = formData.get('title');
   if (formData.get('description')) patch.description = formData.get('description');
+  if (formData.get('fabricDetails') !== null) patch.fabricDetails = formData.get('fabricDetails');
+  if (formData.get('careInstructions') !== null) patch.careInstructions = formData.get('careInstructions');
   if (formData.get('heroImage')) patch.heroImage = formData.get('heroImage');
   const updated = updateProduct(id, patch);
   revalidatePath('/retail');
@@ -75,7 +81,9 @@ export async function fullEditProduct(formData: FormData) {
   if (!productId) return { error: 'Missing productId' };
   const patch: any = {};
   const fields = ['slug','title','description','category','heroImage'];
+  const optionalTextFields = ['fabricDetails','careInstructions'];
   fields.forEach(f => { if (formData.get(f) !== null) patch[f] = formData.get(f); });
+  optionalTextFields.forEach(f => { if (formData.get(f) !== null) patch[f] = formData.get(f); });
   // images (comma separated)
   const imagesCSV = (formData.get('images') || '').toString();
   if (imagesCSV.trim()) {

@@ -57,6 +57,8 @@ export default function FullEditForm({ product }: { product: Product }) {
         <label style={fieldLabelStyle}><span className="flab">Category</span><input name="category" defaultValue={product.category} required style={inputBoxStyle} /></label>
         <label style={fieldLabelStyle}><span className="flab">Hero Image</span><input name="heroImage" defaultValue={product.heroImage} required style={inputBoxStyle} /></label>
         <label style={{ ...fieldLabelStyle, gridColumn:'1 / -1' }}><span className="flab">Description</span><textarea name="description" rows={3} defaultValue={product.description} style={{ ...inputBoxStyle, resize:'vertical' }} /></label>
+        <label style={{ ...fieldLabelStyle, gridColumn:'1 / -1' }}><span className="flab">Fabric Details</span><textarea name="fabricDetails" rows={2} defaultValue={product.fabricDetails} style={{ ...inputBoxStyle, resize:'vertical' }} /></label>
+        <label style={{ ...fieldLabelStyle, gridColumn:'1 / -1' }}><span className="flab">Care Instructions</span><textarea name="careInstructions" rows={2} defaultValue={product.careInstructions} style={{ ...inputBoxStyle, resize:'vertical' }} /></label>
       </div>
       <div style={{ display:'grid', gap:'.75rem' }}>
         <div style={{ display:'flex', flexWrap:'wrap', gap:'.6rem', alignItems:'center' }}>

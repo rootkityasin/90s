@@ -6,9 +6,14 @@ import type { Product } from '../../lib/types';
 import { WHATSAPP_PHONE, FACEBOOK_PAGE_URL } from '../../lib/config';
 import { ZoomImage } from './ZoomImage';
 
+const FALLBACK_FABRIC_DETAILS = '95% Cotton / 5% Elastane (example) • Pre-washed • Colorfast • Soft hand-feel.';
+const FALLBACK_CARE_INSTRUCTIONS = 'Care: Cold wash, inside out, no bleach, tumble dry low.';
+
 export function ProductCard({ p, showPrice, token }: { p: Product; showPrice: boolean; token?: string }) {
   const firstVariant = p.variants[0];
   const href = showPrice ? `/product/${p.slug}` : `/client/product/${p.slug}`;
+  const fabricDetails = p.fabricDetails?.trim() || FALLBACK_FABRIC_DETAILS;
+  const careInstructions = p.careInstructions?.trim() || FALLBACK_CARE_INSTRUCTIONS;
   return (
     <Link href={href} style={{ textDecoration:'none' }}>
       <motion.div
@@ -47,9 +52,9 @@ export function ProductCard({ p, showPrice, token }: { p: Product; showPrice: bo
           }}
         >
           <strong style={{ display: 'block', fontSize: '.68rem', letterSpacing: '.08em', marginBottom: '.25rem' }}>FABRIC & DETAILS</strong>
-          95% Cotton / 5% Elastane (example) • Pre-washed • Colorfast • Soft hand-feel.
+          {fabricDetails}
           <br />
-          Care: Cold wash, inside out, no bleach, tumble dry low.
+          {careInstructions}
         </div>
         {showPrice ? (
           <p

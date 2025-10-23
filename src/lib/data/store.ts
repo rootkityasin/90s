@@ -11,11 +11,16 @@ const manifestProducts = generateProductsFromManifest();
 // Basic price heuristics by category
 const basePrice: Record<string, number> = { cargos: 2200, chinos: 2000, tshirt: 950, hoodies: 2600, trouser: 2400 };
 
+const DEFAULT_FABRIC_DETAILS = '95% Cotton / 5% Elastane (example) • Pre-washed • Colorfast • Soft hand-feel.';
+const DEFAULT_CARE_INSTRUCTIONS = 'Care: Cold wash, inside out, no bleach, tumble dry low.';
+
 let products: Product[] = manifestProducts.map(mp => ({
   id: randomUUID(),
   slug: mp.slug,
   title: mp.title,
   description: mp.description || '',
+  fabricDetails: mp.fabricDetails || DEFAULT_FABRIC_DETAILS,
+  careInstructions: mp.careInstructions || DEFAULT_CARE_INSTRUCTIONS,
   category: mp.category,
   heroImage: mp.heroImage,
   images: mp.images,
@@ -46,7 +51,14 @@ export function getProductBySlug(slug: string) {
 
 export function addProduct(input: ProductInput) {
   const now = new Date().toISOString();
-  const p: Product = { id: randomUUID(), createdAt: now, updatedAt: now, ...input };
+  const p: Product = {
+    id: randomUUID(),
+    createdAt: now,
+    updatedAt: now,
+    ...input,
+    fabricDetails: input.fabricDetails && input.fabricDetails.trim() ? input.fabricDetails : DEFAULT_FABRIC_DETAILS,
+    careInstructions: input.careInstructions && input.careInstructions.trim() ? input.careInstructions : DEFAULT_CARE_INSTRUCTIONS
+  };
   products.unshift(p);
   return p;
 }
@@ -54,7 +66,18 @@ export function addProduct(input: ProductInput) {
 export function updateProduct(id: string, patch: Partial<ProductInput>) {
   const idx = products.findIndex(p => p.id === id);
   if (idx === -1) return null;
-  products[idx] = { ...products[idx], ...patch, updatedAt: new Date().toISOString() };
+  const current = products[idx];
+  products[idx] = {
+    ...current,
+    ...patch,
+    fabricDetails: patch.fabricDetails !== undefined
+      ? (patch.fabricDetails && patch.fabricDetails.trim() ? patch.fabricDetails : DEFAULT_FABRIC_DETAILS)
+      : current.fabricDetails,
+    careInstructions: patch.careInstructions !== undefined
+      ? (patch.careInstructions && patch.careInstructions.trim() ? patch.careInstructions : DEFAULT_CARE_INSTRUCTIONS)
+      : current.careInstructions,
+    updatedAt: new Date().toISOString()
+  };
   return products[idx];
 }
 

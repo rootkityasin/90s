@@ -3,6 +3,9 @@ import React from 'react';
 import { Product } from '../../../lib/types';
 import { ZoomImage } from '../../components/ZoomImage';
 import { useCart } from '../../components/cart/CartContext';
+
+const FALLBACK_FABRIC_DETAILS = '95% Cotton / 5% Elastane (example) • Pre-washed • Colorfast • Soft hand-feel.';
+const FALLBACK_CARE_INSTRUCTIONS = 'Care: Cold wash, inside out, no bleach, tumble dry low.';
 export default function ProductClient({ product, isClient }: { product: Product; isClient: boolean }) {
   const p = product;
   const { add } = useCart();
@@ -52,8 +55,8 @@ export default function ProductClient({ product, isClient }: { product: Product;
         )}
         <div style={{ background:'var(--color-surface)', padding:'1rem 1.1rem', borderRadius:16, margin:'1rem 0', fontSize:'.65rem', letterSpacing:'.5px', lineHeight:1.4 }}>
           <strong style={{ fontSize:'.7rem' }}>FABRIC & DETAILS</strong><br />
-          95% Cotton / 5% Elastane (example) • Pre-washed • Colorfast • Soft hand-feel.<br />
-          Care: Cold wash, inside out, no bleach, tumble dry low.
+          {(p.fabricDetails?.trim() || FALLBACK_FABRIC_DETAILS)}<br />
+          {(p.careInstructions?.trim() || FALLBACK_CARE_INSTRUCTIONS)}
         </div>
         
         <div style={{ display:'flex', gap:'.8rem', flexWrap:'wrap', marginBottom:'1rem' }}>

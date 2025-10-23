@@ -166,6 +166,8 @@ export interface ManualGroup {
   title: string; // product title
   slug: string; // stable slug
   description?: string;
+  fabricDetails?: string;
+  careInstructions?: string;
   files: string[]; // relative paths inside /assets/products
 }
 
@@ -194,6 +196,8 @@ export interface GeneratedProductData {
   images: string[];
   heroImage: string;
   description?: string;
+  fabricDetails?: string;
+  careInstructions?: string;
 }
 
 export function generateProductsFromManifest(): GeneratedProductData[] {
@@ -209,7 +213,9 @@ export function generateProductsFromManifest(): GeneratedProductData[] {
       title: g.title,
       images: g.files.map(f => `/assets/products/${f}`),
       heroImage: `/assets/products/${g.files[0]}`,
-      description: g.description
+      description: g.description,
+      fabricDetails: g.fabricDetails,
+      careInstructions: g.careInstructions
     });
   }
 

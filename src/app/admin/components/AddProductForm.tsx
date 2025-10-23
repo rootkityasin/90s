@@ -64,6 +64,8 @@ export default function AddProductForm({ onClose }: { onClose?: () => void }) {
         <label style={fieldLabelStyle}><span className="flab">Category</span><input name="category" required style={inputBoxStyle} /></label>
         <label style={fieldLabelStyle}><span className="flab">Hero Image</span><input name="heroImage" placeholder="Will auto-set from first uploaded image" style={inputBoxStyle} /></label>
         <label style={{ ...fieldLabelStyle, gridColumn:'1 / -1' }}><span className="flab">Description</span><textarea name="description" rows={3} placeholder="Product description..." style={{ ...inputBoxStyle, resize:'vertical' }} /></label>
+        <label style={{ ...fieldLabelStyle, gridColumn:'1 / -1' }}><span className="flab">Fabric Details</span><textarea name="fabricDetails" rows={2} placeholder="95% Cotton / 5% Elastane • Pre-washed • Colorfast" style={{ ...inputBoxStyle, resize:'vertical' }} /></label>
+        <label style={{ ...fieldLabelStyle, gridColumn:'1 / -1' }}><span className="flab">Care Instructions</span><textarea name="careInstructions" rows={2} placeholder="Care: Cold wash, inside out, no bleach, tumble dry low." style={{ ...inputBoxStyle, resize:'vertical' }} /></label>
       </div>
       
       <div style={{ display:'grid', gap:'.75rem' }}>

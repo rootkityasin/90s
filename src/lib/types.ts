@@ -11,6 +11,8 @@ export type Product = {
   slug: string;
   title: string;
   description: string;
+  fabricDetails?: string;
+  careInstructions?: string;
   category: string;
   heroImage: string;
   // Additional gallery images (including heroImage as first element optionally)
