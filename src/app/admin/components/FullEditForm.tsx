@@ -3,11 +3,14 @@ import React, { useState } from 'react';
 import type { Product, Variant } from '../../../lib/types';
 import { fullEditProduct } from '../actions';
 import DeleteButton from './DeleteButton';
+import { useRouter } from 'next/navigation';
 
-export default function FullEditForm({ product }: { product: Product }) {
+export default function FullEditForm({ product, onClose }: { product: Product; onClose?: () => void }) {
+  const router = useRouter();
   const [variants, setVariants] = useState<Variant[]>(product.variants);
   const [images, setImages] = useState<string[]>(product.images || []);
   const [uploading, setUploading] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   async function handleUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const files = e.target.files;
@@ -48,13 +51,41 @@ export default function FullEditForm({ product }: { product: Product }) {
   };
   const removeVariant = (i: number) => setVariants(v => v.filter((_,idx)=>idx!==i));
 
+  const handleSubmit = async (formData: FormData) => {
+    setSaving(true);
+    try {
+      const result = await fullEditProduct(formData);
+      if (result.product) {
+        router.refresh();
+        // Close modal and let parent show success message
+        if (onClose) {
+          onClose();
+          // Show success via parent component
+          setTimeout(() => {
+            const event = new CustomEvent('productUpdated', { detail: { product: result.product } });
+            window.dispatchEvent(event);
+          }, 100);
+        }
+      } else if (result.error) {
+        alert(`Error: ${result.error}`);
+        setSaving(false);
+      }
+    } catch (error) {
+      console.error('Full edit error:', error);
+      alert('Failed to save changes');
+      setSaving(false);
+    }
+  };
+
   return (
-    <form action={fullEditProduct} style={{ display:'flex', flexDirection:'column', gap:'1.2rem', maxWidth:1000 }}>
+    <form action={handleSubmit} style={{ display:'flex', flexDirection:'column', gap:'1.2rem', maxWidth:1000 }}>
       <input type="hidden" name="productId" value={product.id} />
       <div style={{ display:'grid', gap:'.8rem', gridTemplateColumns:'repeat(auto-fit,minmax(180px,1fr))' }}>
         <label style={fieldLabelStyle}><span className="flab">Tag Code</span><input name="slug" defaultValue={product.slug} required style={inputBoxStyle} /></label>
         <label style={fieldLabelStyle}><span className="flab">Title</span><input name="title" defaultValue={product.title} required style={inputBoxStyle} /></label>
         <label style={fieldLabelStyle}><span className="flab">Category</span><input name="category" defaultValue={product.category} required style={inputBoxStyle} /></label>
+  <label style={fieldLabelStyle}><span className="flab">Subcategory</span><input name="subCategory" defaultValue={product.subCategory || ''} style={inputBoxStyle} placeholder="e.g. Baggy" /></label>
+  <label style={fieldLabelStyle}><span className="flab">Product Code</span><input name="productCode" defaultValue={product.productCode || ''} style={inputBoxStyle} placeholder="Short code e.g. TRS-01" /></label>
         <label style={fieldLabelStyle}><span className="flab">Hero Image</span><input name="heroImage" defaultValue={product.heroImage} required style={inputBoxStyle} /></label>
         <label style={{ ...fieldLabelStyle, gridColumn:'1 / -1' }}><span className="flab">Description</span><textarea name="description" rows={3} defaultValue={product.description} style={{ ...inputBoxStyle, resize:'vertical' }} /></label>
         <label style={{ ...fieldLabelStyle, gridColumn:'1 / -1' }}><span className="flab">Fabric Details</span><textarea name="fabricDetails" rows={2} defaultValue={product.fabricDetails} style={{ ...inputBoxStyle, resize:'vertical' }} /></label>
@@ -142,7 +173,9 @@ export default function FullEditForm({ product }: { product: Product }) {
 
       <div style={{ display:'flex', gap:'.6rem', justifyContent:'space-between', alignItems: 'center' }}>
         <DeleteButton productId={product.id} />
-        <button type="submit" style={buttonStyles.primary}>Save Changes</button>
+        <button type="submit" disabled={saving} style={{ ...buttonStyles.primary, opacity: saving ? 0.6 : 1 }}>
+          {saving ? 'Saving...' : 'Save Changes'}
+        </button>
       </div>
     </form>
   );

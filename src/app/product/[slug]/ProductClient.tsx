@@ -34,6 +34,9 @@ export default function ProductClient({ product, isClient }: { product: Product;
     });
   }
 
+  const categoryLabel = p.subCategory ? `${p.category} • ${p.subCategory}` : p.category;
+  const productCode = (p.productCode && p.productCode.trim()) || p.slug.toUpperCase().replace(/[^A-Z0-9]+/g,'').slice(0,12);
+
   return (
     <div style={{ display:'flex', gap:'2.2rem', flexWrap:'wrap' }}>
       <div style={{ width:380, maxWidth:'100%' }}>
@@ -50,6 +53,8 @@ export default function ProductClient({ product, isClient }: { product: Product;
       </div>
       <div style={{ flex:1, minWidth:300 }}>
         <h1 className='header-accent' style={{ marginTop:0 }}>{p.title}</h1>
+        <p style={{ fontSize:'.62rem', letterSpacing:'.8px', textTransform:'uppercase', margin:'0 0 .8rem', color:'var(--color-accent)' }}>{categoryLabel}</p>
+    <p style={{ fontSize:'.65rem', letterSpacing:'.1em', textTransform:'uppercase', margin:'-.4rem 0 1rem', opacity:.7 }}>Product Code: {productCode}</p>
         {p.description?.trim() && (
           <p style={{ fontSize:'.8rem', lineHeight:1.45 }}>{p.description}</p>
         )}

@@ -8,6 +8,8 @@ export async function createProduct(formData: FormData) {
   if (!title) return { error: 'Title required' };
   const slug = (formData.get('slug') || title.toLowerCase().replace(/[^a-z0-9]+/g,'-')).toString();
   const description = (formData.get('description') || '').toString();
+  const subCategory = (formData.get('subCategory') || '').toString();
+  const productCode = (formData.get('productCode') || '').toString();
   const fabricDetails = (formData.get('fabricDetails') || '').toString();
   const careInstructions = (formData.get('careInstructions') || '').toString();
   const category = (formData.get('category') || '').toString();
@@ -47,6 +49,8 @@ export async function createProduct(formData: FormData) {
     slug, 
     title, 
     description, 
+  subCategory,
+  productCode,
     fabricDetails,
     careInstructions,
     category, 
@@ -66,6 +70,8 @@ export async function editProduct(id: string, formData: FormData) {
   const patch: any = {};
   if (formData.get('title')) patch.title = formData.get('title');
   if (formData.get('description')) patch.description = formData.get('description');
+  if (formData.get('subCategory') !== null) patch.subCategory = formData.get('subCategory');
+  if (formData.get('productCode') !== null) patch.productCode = formData.get('productCode');
   if (formData.get('fabricDetails') !== null) patch.fabricDetails = formData.get('fabricDetails');
   if (formData.get('careInstructions') !== null) patch.careInstructions = formData.get('careInstructions');
   if (formData.get('heroImage')) patch.heroImage = formData.get('heroImage');
@@ -81,7 +87,7 @@ export async function fullEditProduct(formData: FormData) {
   if (!productId) return { error: 'Missing productId' };
   const patch: any = {};
   const fields = ['slug','title','description','category','heroImage'];
-  const optionalTextFields = ['fabricDetails','careInstructions'];
+  const optionalTextFields = ['subCategory','productCode','fabricDetails','careInstructions'];
   fields.forEach(f => { if (formData.get(f) !== null) patch[f] = formData.get(f); });
   optionalTextFields.forEach(f => { if (formData.get(f) !== null) patch[f] = formData.get(f); });
   // images (comma separated)

@@ -3,17 +3,14 @@ import React from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import type { Product } from '../../lib/types';
-import { WHATSAPP_PHONE, FACEBOOK_PAGE_URL } from '../../lib/config';
 import { ZoomImage } from './ZoomImage';
-
-const FALLBACK_FABRIC_DETAILS = '95% Cotton / 5% Elastane (example) • Pre-washed • Colorfast • Soft hand-feel.';
-const FALLBACK_CARE_INSTRUCTIONS = 'Care: Cold wash, inside out, no bleach, tumble dry low.';
 
 export function ProductCard({ p, showPrice, token }: { p: Product; showPrice: boolean; token?: string }) {
   const firstVariant = p.variants[0];
   const href = showPrice ? `/product/${p.slug}` : `/client/product/${p.slug}`;
-  const fabricDetails = p.fabricDetails?.trim() || FALLBACK_FABRIC_DETAILS;
-  const careInstructions = p.careInstructions?.trim() || FALLBACK_CARE_INSTRUCTIONS;
+  const badgeLabel = p.subCategory ? `${p.category} • ${p.subCategory}` : p.category;
+  const blurb = p.description?.trim() || (p.subCategory ? `${p.category} — ${p.subCategory}` : 'View product for full details');
+  const productCode = (p.productCode && p.productCode.trim()) || p.slug.toUpperCase().replace(/[^A-Z0-9]+/g,'').slice(0,12);
   return (
     <Link href={href} style={{ textDecoration:'none' }}>
       <motion.div
@@ -26,8 +23,8 @@ export function ProductCard({ p, showPrice, token }: { p: Product; showPrice: bo
         transition={{ duration:.55, ease:[0.22,0.68,0,1] }}
         role="group"
       >
-      <div className="badge">{p.category}</div>
-      {/* Using next/image would need explicit height/width; for simplicity using plain img now */}
+        <div className="badge">{badgeLabel}</div>
+        {/* Using next/image would need explicit height/width; for simplicity using plain img now */}
         <ZoomImage src={p.heroImage} alt={p.title} height={240} noZoom />
         <h3
           className="product-title-font"
@@ -39,7 +36,8 @@ export function ProductCard({ p, showPrice, token }: { p: Product; showPrice: bo
         >
           {p.title}
         </h3>
-        <div
+        <p style={{ fontSize: '.6rem', letterSpacing: '.12em', textTransform: 'uppercase', margin: '0 0 .4rem', color: 'rgba(0,0,0,0.6)' }}>Code: {productCode}</p>
+        <p
           style={{
             fontSize: '.66rem',
             lineHeight: 1.4,
@@ -48,14 +46,12 @@ export function ProductCard({ p, showPrice, token }: { p: Product; showPrice: bo
             borderRadius: 10,
             background: 'rgba(17, 17, 17, 0.08)',
             border: '1px solid rgba(0, 0, 0, 0.08)',
-            minHeight: '3.2rem'
+            minHeight: '3.2rem',
+            marginTop: 0
           }}
         >
-          <strong style={{ display: 'block', fontSize: '.68rem', letterSpacing: '.08em', marginBottom: '.25rem' }}>FABRIC & DETAILS</strong>
-          {fabricDetails}
-          <br />
-          {careInstructions}
-        </div>
+          {blurb}
+        </p>
         {showPrice ? (
           <p
             style={{

@@ -19,6 +19,8 @@ let products: Product[] = manifestProducts.map(mp => ({
   slug: mp.slug,
   title: mp.title,
   description: mp.description || '',
+  subCategory: mp.subCategory,
+  productCode: mp.productCode || mp.slug.toUpperCase().replace(/[^A-Z0-9]+/g,'').slice(0,12),
   fabricDetails: mp.fabricDetails || DEFAULT_FABRIC_DETAILS,
   careInstructions: mp.careInstructions || DEFAULT_CARE_INSTRUCTIONS,
   category: mp.category,
@@ -51,11 +53,17 @@ export function getProductBySlug(slug: string) {
 
 export function addProduct(input: ProductInput) {
   const now = new Date().toISOString();
+  const normalizedSubCategory = input.subCategory && input.subCategory.trim() ? input.subCategory.trim() : undefined;
+  const normalizedProductCode = input.productCode && input.productCode.trim()
+    ? input.productCode.trim()
+    : input.slug.toUpperCase().replace(/[^A-Z0-9]+/g,'').slice(0,12);
   const p: Product = {
     id: randomUUID(),
     createdAt: now,
     updatedAt: now,
     ...input,
+    subCategory: normalizedSubCategory,
+    productCode: normalizedProductCode,
     fabricDetails: input.fabricDetails && input.fabricDetails.trim() ? input.fabricDetails : DEFAULT_FABRIC_DETAILS,
     careInstructions: input.careInstructions && input.careInstructions.trim() ? input.careInstructions : DEFAULT_CARE_INSTRUCTIONS
   };
@@ -67,9 +75,19 @@ export function updateProduct(id: string, patch: Partial<ProductInput>) {
   const idx = products.findIndex(p => p.id === id);
   if (idx === -1) return null;
   const current = products[idx];
+  const normalizedSubCategory = patch.subCategory !== undefined
+    ? (patch.subCategory && patch.subCategory.trim() ? patch.subCategory.trim() : undefined)
+    : current.subCategory;
+  const normalizedProductCode = patch.productCode !== undefined
+    ? (patch.productCode && patch.productCode.trim()
+        ? patch.productCode.trim()
+        : current.slug.toUpperCase().replace(/[^A-Z0-9]+/g,'').slice(0,12))
+    : current.productCode || current.slug.toUpperCase().replace(/[^A-Z0-9]+/g,'').slice(0,12);
   products[idx] = {
     ...current,
     ...patch,
+    subCategory: normalizedSubCategory,
+    productCode: normalizedProductCode,
     fabricDetails: patch.fabricDetails !== undefined
       ? (patch.fabricDetails && patch.fabricDetails.trim() ? patch.fabricDetails : DEFAULT_FABRIC_DETAILS)
       : current.fabricDetails,

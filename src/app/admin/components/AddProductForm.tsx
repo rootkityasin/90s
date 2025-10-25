@@ -2,13 +2,16 @@
 import React, { useState } from 'react';
 import type { Variant } from '../../../lib/types';
 import { createProduct } from '../actions';
+import { useRouter } from 'next/navigation';
 
 export default function AddProductForm({ onClose }: { onClose?: () => void }) {
+  const router = useRouter();
   const [variants, setVariants] = useState<Variant[]>([
     { id: crypto.randomUUID(), sku:'', color:'', size:'', retailPriceBDT:0 }
   ]);
   const [images, setImages] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   async function handleUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const files = e.target.files;
@@ -50,9 +53,23 @@ export default function AddProductForm({ onClose }: { onClose?: () => void }) {
   const removeVariant = (i: number) => setVariants(v => v.filter((_,idx)=>idx!==i));
 
   const handleSubmit = async (formData: FormData) => {
-    const result = await createProduct(formData);
-    if (result.product && onClose) {
-      onClose(); // Close modal on successful creation
+    setSaving(true);
+    try {
+      const result = await createProduct(formData);
+      if (result.product) {
+        router.refresh();
+        // Dispatch event for parent notification
+        const event = new CustomEvent('productCreated', { detail: { product: result.product } });
+        window.dispatchEvent(event);
+        if (onClose) onClose();
+      } else if (result.error) {
+        alert(`Error: ${result.error}`);
+        setSaving(false);
+      }
+    } catch (error) {
+      console.error('Create product error:', error);
+      alert('Failed to create product');
+      setSaving(false);
     }
   };
 
@@ -62,6 +79,8 @@ export default function AddProductForm({ onClose }: { onClose?: () => void }) {
         <label style={fieldLabelStyle}><span className="flab">Tag Code</span><input name="slug" placeholder="auto-from-title" style={inputBoxStyle} /></label>
         <label style={fieldLabelStyle}><span className="flab">Title</span><input name="title" required style={inputBoxStyle} /></label>
         <label style={fieldLabelStyle}><span className="flab">Category</span><input name="category" required style={inputBoxStyle} /></label>
+  <label style={fieldLabelStyle}><span className="flab">Subcategory</span><input name="subCategory" placeholder="e.g. Baggy" style={inputBoxStyle} /></label>
+  <label style={fieldLabelStyle}><span className="flab">Product Code</span><input name="productCode" placeholder="Short code e.g. TRS-01" style={inputBoxStyle} /></label>
         <label style={fieldLabelStyle}><span className="flab">Hero Image</span><input name="heroImage" placeholder="Will auto-set from first uploaded image" style={inputBoxStyle} /></label>
         <label style={{ ...fieldLabelStyle, gridColumn:'1 / -1' }}><span className="flab">Description</span><textarea name="description" rows={3} placeholder="Product description..." style={{ ...inputBoxStyle, resize:'vertical' }} /></label>
         <label style={{ ...fieldLabelStyle, gridColumn:'1 / -1' }}><span className="flab">Fabric Details</span><textarea name="fabricDetails" rows={2} placeholder="95% Cotton / 5% Elastane • Pre-washed • Colorfast" style={{ ...inputBoxStyle, resize:'vertical' }} /></label>
@@ -149,7 +168,9 @@ export default function AddProductForm({ onClose }: { onClose?: () => void }) {
       </fieldset>
 
       <div style={{ display:'flex', gap:'.6rem', justifyContent:'flex-end', alignItems: 'center' }}>
-        <button type="submit" style={buttonStyles.primary}>Create Product</button>
+        <button type="submit" disabled={saving} style={{ ...buttonStyles.primary, opacity: saving ? 0.6 : 1 }}>
+          {saving ? 'Creating...' : 'Create Product'}
+        </button>
       </div>
     </form>
   );

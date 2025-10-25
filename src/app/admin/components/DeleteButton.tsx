@@ -1,6 +1,7 @@
 "use client";
 import React from 'react';
 import { deleteProduct } from '../actions';
+import { useRouter } from 'next/navigation';
 
 // Modern button styles
 const buttonStyles = {
@@ -36,16 +37,35 @@ const buttonStyles = {
 };
 
 export default function DeleteButton({ productId }: { productId: string }) {
+  const router = useRouter();
   const [confirming, setConfirming] = React.useState(false);
+  const [deleting, setDeleting] = React.useState(false);
 
   async function handleDelete() {
     if (!confirming) {
       setConfirming(true);
       return;
     }
-    await deleteProduct(productId);
-    // Note: The modal closing logic will be handled by the parent component
-    // which will see the product is no longer in the list.
+
+    setDeleting(true);
+    try {
+      const result = await deleteProduct(productId);
+      if (result.success) {
+        // Dispatch event for parent to show notification
+        const event = new CustomEvent('productDeleted', { detail: { productId } });
+        window.dispatchEvent(event);
+        router.refresh();
+      } else {
+        alert(`Error: ${result.error || 'Failed to delete product'}`);
+        setDeleting(false);
+        setConfirming(false);
+      }
+    } catch (error) {
+      console.error('Delete error:', error);
+      alert('Failed to delete product');
+      setDeleting(false);
+      setConfirming(false);
+    }
   }
 
   function handleMouseLeave() {
@@ -57,9 +77,14 @@ export default function DeleteButton({ productId }: { productId: string }) {
       type="button"
       onClick={handleDelete}
       onMouseLeave={handleMouseLeave}
-      style={confirming ? buttonStyles.deleteConfirm : buttonStyles.delete}
+      disabled={deleting}
+      style={{
+        ...(confirming ? buttonStyles.deleteConfirm : buttonStyles.delete),
+        opacity: deleting ? 0.6 : 1,
+        cursor: deleting ? 'not-allowed' : 'pointer'
+      }}
     >
-      {confirming ? 'Confirm Delete?' : 'Delete Product'}
+      {deleting ? 'Deleting...' : confirming ? 'Confirm Delete?' : 'Delete Product'}
     </button>
   );
 }

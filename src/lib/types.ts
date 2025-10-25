@@ -11,6 +11,8 @@ export type Product = {
   slug: string;
   title: string;
   description: string;
+  subCategory?: string;
+  productCode?: string;
   fabricDetails?: string;
   careInstructions?: string;
   category: string;

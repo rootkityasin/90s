@@ -39,5 +39,20 @@ Single domain using middleware to gate sections by role; can migrate to subdomai
 - Use dynamic = 'force-dynamic' on client / retail list for now; later switch to ISR for stable catalog & client-side generate token.
 - Add Lighthouse & Web Vitals tracking early.
 
+## Payment Integration
+
+See **[BKASH_INTEGRATION_GUIDE.md](./BKASH_INTEGRATION_GUIDE.md)** for complete bKash payment gateway integration with security measures.
+
+### Security Features Implemented:
+- ✅ Server-side credential protection
+- ✅ Rate limiting & CSRF protection
+- ✅ Input validation & sanitization
+- ✅ Secure token management
+- ✅ Payment verification & logging
+- ✅ HTTPS enforcement
+- ✅ Error handling without information disclosure
+
+**Attack Prevention:** SQL injection, XSS, CSRF, man-in-the-middle, replay attacks, DoS, price manipulation, payment bypass, session hijacking, and more.
+
 ## Licensing
 All code simple boilerplate; adapt freely.

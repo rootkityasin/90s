@@ -36,6 +36,35 @@ export default function AdminClient({ productsInitial, sales }: Props) {
   const [editing, setEditing] = useState<any | null>(null);
   const [showAddProduct, setShowAddProduct] = useState(false);
   const [showTokenLookup, setShowTokenLookup] = useState(false);
+  const [notification, setNotification] = useState<{ type: 'success' | 'error' | 'delete'; message: string } | null>(null);
+
+  // Listen for product update events
+  React.useEffect(() => {
+    const handleProductUpdated = (e: any) => {
+      setNotification({ type: 'success', message: 'Product updated successfully!' });
+      setTimeout(() => setNotification(null), 3000);
+    };
+
+    const handleProductCreated = (e: any) => {
+      setNotification({ type: 'success', message: 'Product created successfully!' });
+      setTimeout(() => setNotification(null), 3000);
+    };
+
+    const handleProductDeleted = (e: any) => {
+      setNotification({ type: 'delete', message: 'Product deleted successfully!' });
+      setTimeout(() => setNotification(null), 3000);
+    };
+
+    window.addEventListener('productUpdated', handleProductUpdated);
+    window.addEventListener('productCreated', handleProductCreated);
+    window.addEventListener('productDeleted', handleProductDeleted);
+
+    return () => {
+      window.removeEventListener('productUpdated', handleProductUpdated);
+      window.removeEventListener('productCreated', handleProductCreated);
+      window.removeEventListener('productDeleted', handleProductDeleted);
+    };
+  }, []);
 
   return (
     <main className="container">
@@ -136,7 +165,7 @@ export default function AdminClient({ productsInitial, sales }: Props) {
           <div style={{ background:'var(--color-surface)', padding:'1.5rem', borderRadius:16, width:'min(100%,960px)', position:'relative' }} onClick={e=>e.stopPropagation()}>
             <button onClick={()=>setEditing(null)} style={{ position:'absolute', top:8, right:8, background:'#222', color:'#fff', border:'none', borderRadius:6, padding:'.4rem .6rem', fontSize:'.65rem' }}>Close</button>
             <h2 style={{ marginTop:0 }}>Full Edit: {editing.title}</h2>
-            <FullEditForm product={editing} />
+            <FullEditForm product={editing} onClose={() => setEditing(null)} />
           </div>
         </div>
       )}
@@ -168,6 +197,41 @@ export default function AdminClient({ productsInitial, sales }: Props) {
             </button>
             <h2 style={{ margin:'0 0 1.2rem', fontSize:'1.35rem', letterSpacing:'0.8px' }}>Token Lookup</h2>
             <TokenLookupModal />
+          </div>
+        </div>
+      )}
+
+      {/* Success/Error Notification */}
+      {notification && (
+        <div
+          style={{
+            position: 'fixed',
+            top: '2rem',
+            right: '2rem',
+            background: notification.type === 'success' 
+              ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)'
+              : notification.type === 'delete'
+              ? 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)'
+              : 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+            color: '#fff',
+            padding: '1rem 1.5rem',
+            borderRadius: 12,
+            boxShadow: '0 10px 25px -5px rgba(0,0,0,0.3)',
+            zIndex: 9999,
+            display: 'flex',
+            alignItems: 'center',
+            gap: '.75rem',
+            minWidth: 280,
+            animation: 'slideInRight 0.3s ease-out',
+          }}
+        >
+          <div style={{ fontSize: '1.5rem' }}>
+            {notification.type === 'success' && '✓'}
+            {notification.type === 'delete' && '🗑️'}
+            {notification.type === 'error' && '⚠️'}
+          </div>
+          <div style={{ flex: 1, fontWeight: 600, fontSize: '.85rem', letterSpacing: '.3px' }}>
+            {notification.message}
           </div>
         </div>
       )}
