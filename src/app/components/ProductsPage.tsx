@@ -66,7 +66,13 @@ export function ProductsPage({ title, description, mode }: ProductsPageProps) {
 
   const filtered = rawProducts.filter(p => {
     if (cat !== 'all' && p.category !== cat) return false;
-    if (q && !p.title.toLowerCase().includes(q.toLowerCase()) && !p.description.toLowerCase().includes(q.toLowerCase())) return false;
+    if (q) {
+      const searchLower = q.toLowerCase();
+      const matchesTitle = p.title.toLowerCase().includes(searchLower);
+      const matchesDescription = p.description.toLowerCase().includes(searchLower);
+      const matchesProductCode = p.productCode?.toLowerCase().includes(searchLower);
+      if (!matchesTitle && !matchesDescription && !matchesProductCode) return false;
+    }
     return true;
   });
   const products = filtered.slice().sort((a,b) => {

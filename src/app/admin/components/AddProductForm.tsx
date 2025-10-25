@@ -76,7 +76,7 @@ export default function AddProductForm({ onClose }: { onClose?: () => void }) {
   return (
     <form action={handleSubmit} style={{ display:'flex', flexDirection:'column', gap:'1.2rem', maxWidth:1000 }}>
       <div style={{ display:'grid', gap:'.8rem', gridTemplateColumns:'repeat(auto-fit,minmax(180px,1fr))' }}>
-        <label style={fieldLabelStyle}><span className="flab">Tag Code</span><input name="slug" placeholder="auto-from-title" style={inputBoxStyle} /></label>
+        <label style={fieldLabelStyle}><span className="flab">Slug</span><input name="slug" placeholder="auto-from-title" style={inputBoxStyle} /></label>
         <label style={fieldLabelStyle}><span className="flab">Title</span><input name="title" required style={inputBoxStyle} /></label>
         <label style={fieldLabelStyle}><span className="flab">Category</span><input name="category" required style={inputBoxStyle} /></label>
   <label style={fieldLabelStyle}><span className="flab">Subcategory</span><input name="subCategory" placeholder="e.g. Baggy" style={inputBoxStyle} /></label>

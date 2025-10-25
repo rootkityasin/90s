@@ -53,6 +53,7 @@ export default function FullEditForm({ product, onClose }: { product: Product; o
 
   const handleSubmit = async (formData: FormData) => {
     setSaving(true);
+    
     try {
       const result = await fullEditProduct(formData);
       if (result.product) {
@@ -84,9 +85,10 @@ export default function FullEditForm({ product, onClose }: { product: Product; o
 
   return (
     <form action={handleSubmit} style={{ display:'flex', flexDirection:'column', gap:'1.2rem', maxWidth:1000 }}>
-      <input type="hidden" name="productId" value={product.id} />
+      {/* Use slug as productId for Vercel cross-instance compatibility */}
+      <input type="hidden" name="productId" value={product.slug} />
       <div style={{ display:'grid', gap:'.8rem', gridTemplateColumns:'repeat(auto-fit,minmax(180px,1fr))' }}>
-        <label style={fieldLabelStyle}><span className="flab">Tag Code</span><input name="slug" defaultValue={product.slug} required style={inputBoxStyle} /></label>
+        <label style={fieldLabelStyle}><span className="flab">Slug</span><input name="slug" defaultValue={product.slug} required style={inputBoxStyle} /></label>
         <label style={fieldLabelStyle}><span className="flab">Title</span><input name="title" defaultValue={product.title} required style={inputBoxStyle} /></label>
         <label style={fieldLabelStyle}><span className="flab">Category</span><input name="category" defaultValue={product.category} required style={inputBoxStyle} /></label>
   <label style={fieldLabelStyle}><span className="flab">Subcategory</span><input name="subCategory" defaultValue={product.subCategory || ''} style={inputBoxStyle} placeholder="e.g. Baggy" /></label>
@@ -177,7 +179,7 @@ export default function FullEditForm({ product, onClose }: { product: Product; o
       </fieldset>
 
       <div style={{ display:'flex', gap:'.6rem', justifyContent:'space-between', alignItems: 'center' }}>
-        <DeleteButton productId={product.id} />
+        <DeleteButton productId={product.slug} />
         <button type="submit" disabled={saving} style={{ ...buttonStyles.primary, opacity: saving ? 0.6 : 1 }}>
           {saving ? 'Saving...' : 'Save Changes'}
         </button>

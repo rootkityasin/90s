@@ -72,7 +72,12 @@ export function addProduct(input: ProductInput) {
 }
 
 export function updateProduct(id: string, patch: Partial<ProductInput>) {
-  const idx = products.findIndex(p => p.id === id);
+  // Try to find by id first, then fall back to slug for Vercel compatibility
+  let idx = products.findIndex(p => p.id === id);
+  if (idx === -1) {
+    // If not found by id, try by slug (for cross-instance consistency)
+    idx = products.findIndex(p => p.slug === id);
+  }
   if (idx === -1) return null;
   const current = products[idx];
   const normalizedSubCategory = patch.subCategory !== undefined
@@ -101,7 +106,8 @@ export function updateProduct(id: string, patch: Partial<ProductInput>) {
 
 export function deleteProduct(id: string): boolean {
   const initialLength = products.length;
-  products = products.filter(p => p.id !== id);
+  // Try to delete by id first, then by slug for Vercel compatibility
+  products = products.filter(p => p.id !== id && p.slug !== id);
   return products.length < initialLength;
 }
 
