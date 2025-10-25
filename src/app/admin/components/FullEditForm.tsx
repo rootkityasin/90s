@@ -56,23 +56,28 @@ export default function FullEditForm({ product, onClose }: { product: Product; o
     try {
       const result = await fullEditProduct(formData);
       if (result.product) {
-        router.refresh();
-        // Close modal and let parent show success message
+        // Close modal first
         if (onClose) {
           onClose();
-          // Show success via parent component
-          setTimeout(() => {
-            const event = new CustomEvent('productUpdated', { detail: { product: result.product } });
-            window.dispatchEvent(event);
-          }, 100);
         }
+        
+        // Show success notification
+        const event = new CustomEvent('productUpdated', { detail: { product: result.product } });
+        window.dispatchEvent(event);
+        
+        // Refresh to show changes
+        router.refresh();
       } else if (result.error) {
         alert(`Error: ${result.error}`);
         setSaving(false);
+      } else {
+        // No product returned but no error - likely a timeout or network issue
+        alert('Save may have timed out. Please refresh the page to check if changes were saved.');
+        setSaving(false);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Full edit error:', error);
-      alert('Failed to save changes');
+      alert(`Failed to save changes: ${error.message || 'Unknown error'}`);
       setSaving(false);
     }
   };
