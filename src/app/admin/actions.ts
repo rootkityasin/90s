@@ -1,15 +1,10 @@
 'use server';
 import { revalidatePath } from 'next/cache';
 
-// Helper to make internal API calls that work in both localhost and Vercel
-async function internalFetch(path: string, options: RequestInit) {
-  const baseUrl = process.env.VERCEL_URL 
-    ? `https://${process.env.VERCEL_URL}`
-    : 'http://localhost:3000';
-  
-  const url = `${baseUrl}${path}`;
-  return fetch(url, options);
-}
+// Server actions should call API routes directly, not via HTTP
+// Import the API handler directly instead of using fetch
+import { addProduct, updateProduct as updateProductInDB, deleteProduct as deleteProductFromDB } from '../../lib/data/store';
+import { broadcastProductUpdate } from '../../lib/realtime';
 
 export async function createProduct(formData: FormData) {
   const title = (formData.get('title') || '').toString();
@@ -64,33 +59,36 @@ export async function createProduct(formData: FormData) {
   }
   
   try {
-    const response = await internalFetch('/api/admin/products', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        slug,
-        title,
-        description,
-        subCategory,
-        productCode,
-        fabricDetails,
-        careInstructions,
-        category,
-        base,
-        heroImage,
-        images,
-        variants
-      }),
-      cache: 'no-store'
-    });
+    console.log('[createProduct] Creating product:', productCode);
     
-    const data = await response.json();
+    const productData = {
+      slug,
+      title,
+      description,
+      subCategory,
+      productCode,
+      fabricDetails,
+      careInstructions,
+      category,
+      base,
+      heroImage,
+      images,
+      variants
+    };
     
-    if (!data.success) {
-      return { error: data.error || 'Failed to create product' };
-    }
+    const newProduct = await addProduct(productData);
     
-    return { product: data.product };
+    console.log('[createProduct] Product created:', newProduct.id);
+    
+    // Revalidate pages
+    revalidatePath('/retail');
+    revalidatePath('/client/catalog');
+    revalidatePath('/admin');
+    
+    // Broadcast update
+    broadcastProductUpdate(newProduct);
+    
+    return { product: newProduct };
   } catch (error: any) {
     console.error('[createProduct] Error:', error);
     return { error: error.message || 'Failed to create product' };
@@ -100,7 +98,7 @@ export async function createProduct(formData: FormData) {
 export async function editProduct(productCode: string, formData: FormData) {
   console.log('[editProduct] Updating product with code:', productCode);
   
-  const patch: any = { productCode };
+  const patch: any = {};
   if (formData.get('title')) patch.title = formData.get('title');
   if (formData.get('description')) patch.description = formData.get('description');
   if (formData.get('subCategory') !== null) patch.subCategory = formData.get('subCategory');
@@ -112,22 +110,21 @@ export async function editProduct(productCode: string, formData: FormData) {
   console.log('[editProduct] Patch data:', Object.keys(patch));
   
   try {
-    const response = await internalFetch('/api/admin/products', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(patch),
-      cache: 'no-store'
-    });
+    const updated = await updateProductInDB(productCode, patch);
     
-    const data = await response.json();
-    
-    console.log('[editProduct] Response:', data.success ? 'SUCCESS' : 'FAILED');
-    
-    if (!data.success) {
-      return { error: data.error || 'Failed to update product' };
+    if (!updated) {
+      return { error: 'Product not found' };
     }
     
-    return { product: data.product };
+    console.log('[editProduct] Success');
+    
+    revalidatePath('/admin');
+    revalidatePath('/retail');
+    revalidatePath('/client/catalog');
+    
+    broadcastProductUpdate(updated);
+    
+    return { product: updated };
   } catch (error: any) {
     console.error('[editProduct] Error:', error);
     return { error: error.message || 'Failed to update product' };
@@ -182,22 +179,26 @@ export async function fullEditProduct(formData: FormData) {
     
     console.log('[fullEditProduct] Patch keys:', Object.keys(patch), 'variants:', variants.length);
     
-    const response = await internalFetch('/api/admin/products', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(patch),
-      cache: 'no-store'
-    });
+    // Update product directly in database
+    const updatedProduct = await updateProductInDB(productCode, patch);
     
-    const data = await response.json();
+    console.log('[fullEditProduct] Response:', updatedProduct ? 'SUCCESS' : 'FAILED');
     
-    console.log('[fullEditProduct] Response:', data.success ? 'SUCCESS' : 'FAILED');
-    
-    if (!data.success) {
-      return { error: data.error || 'Product not found or update failed' };
+    if (!updatedProduct) {
+      return { error: 'Product not found or update failed' };
     }
     
-    return { product: data.product };
+    // Broadcast update to connected clients
+    broadcastProductUpdate(updatedProduct);
+    
+    // Revalidate paths
+    revalidatePath('/admin');
+    revalidatePath('/retail');
+    revalidatePath('/client/catalog');
+    revalidatePath(`/retail/products/${updatedProduct.slug}`);
+    revalidatePath(`/client/catalog/${updatedProduct.slug}`);
+    
+    return { product: updatedProduct };
   } catch (error: any) {
     console.error('[fullEditProduct] Error:', error);
     return { error: error.message || 'Update failed' };
@@ -208,16 +209,20 @@ export async function deleteProduct(productCode: string) {
   if (!productCode) return { error: 'Missing product identifier' };
   
   try {
-    const response = await internalFetch(`/api/admin/products?productCode=${encodeURIComponent(productCode)}`, {
-      method: 'DELETE',
-      cache: 'no-store'
-    });
+    // Delete product directly from database
+    const success = await deleteProductFromDB(productCode);
     
-    const data = await response.json();
-    
-    if (!data.success) {
-      return { error: data.error || 'Failed to delete product' };
+    if (!success) {
+      return { error: 'Failed to delete product' };
     }
+    
+    // Broadcast deletion to connected clients
+    broadcastProductUpdate(null);
+    
+    // Revalidate paths
+    revalidatePath('/admin');
+    revalidatePath('/retail');
+    revalidatePath('/client/catalog');
     
     return { success: true };
   } catch (error: any) {

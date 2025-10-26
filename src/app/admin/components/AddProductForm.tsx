@@ -279,9 +279,17 @@ export default function AddProductForm({ onClose }: { onClose?: () => void }) {
                   type="number" 
                   value={v.retailPriceBDT || ''} 
                   onChange={e=>updateVariant(i,{retailPriceBDT:parseInt(e.target.value,10)||0})} 
+                  onKeyPress={(e) => {
+                    // Only allow numbers
+                    if (!/[0-9]/.test(e.key)) {
+                      e.preventDefault();
+                    }
+                  }}
                   style={numberInputStyle}
                   required
                   min="1"
+                  step="1"
+                  pattern="[0-9]+"
                 />
               </label>
               {variants.length > 1 && (

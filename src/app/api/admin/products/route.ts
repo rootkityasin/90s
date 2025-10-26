@@ -20,19 +20,32 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     
+    console.log('[POST /api/admin/products] Request body:', JSON.stringify(body).substring(0, 200));
+    
     // Validate required fields
     if (!body.title) {
+      console.error('[POST] Missing title');
       return NextResponse.json({ success: false, error: 'Title is required' }, { status: 400 });
     }
     if (!body.category) {
+      console.error('[POST] Missing category');
       return NextResponse.json({ success: false, error: 'Category is required' }, { status: 400 });
     }
+    if (!body.productCode) {
+      console.error('[POST] Missing productCode');
+      return NextResponse.json({ success: false, error: 'Product code is required' }, { status: 400 });
+    }
+    if (!body.base || (body.base !== 'retail' && body.base !== 'client')) {
+      console.error('[POST] Invalid base:', body.base);
+      return NextResponse.json({ success: false, error: 'Base must be either "retail" or "client"' }, { status: 400 });
+    }
     if (!body.variants || body.variants.length === 0) {
+      console.error('[POST] No variants');
       return NextResponse.json({ success: false, error: 'At least one variant is required' }, { status: 400 });
     }
 
-    // Generate slug if not provided
-    const slug = body.slug || body.title.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+    // Generate slug from productCode if not provided
+    const slug = body.productCode.toLowerCase().replace(/[^a-z0-9]+/g, '-');
     
     // Set hero image to first image if not provided
     const heroImage = body.heroImage || (body.images && body.images.length > 0 ? body.images[0] : '');
@@ -54,6 +67,8 @@ export async function POST(request: NextRequest) {
 
     const newProduct = await addProduct(productData);
     
+    console.log('[POST] Product created successfully:', newProduct.productCode);
+    
     // Revalidate pages
     revalidatePath('/retail');
     revalidatePath('/client/catalog');
@@ -64,8 +79,13 @@ export async function POST(request: NextRequest) {
     
     return NextResponse.json({ success: true, product: newProduct }, { status: 201 });
   } catch (error: any) {
-    console.error('Create product error:', error);
-    return NextResponse.json({ success: false, error: error.message || 'Failed to create product' }, { status: 500 });
+    console.error('[POST /api/admin/products] Error:', error);
+    console.error('[POST /api/admin/products] Stack:', error.stack);
+    return NextResponse.json({ 
+      success: false, 
+      error: error.message || 'Failed to create product',
+      details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    }, { status: 500 });
   }
 }
 

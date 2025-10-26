@@ -5,6 +5,17 @@ export const dynamic = 'force-dynamic';
 
 export async function POST(req: NextRequest) {
   try {
+    // Check if Cloudinary is configured
+    if (!process.env.CLOUDINARY_CLOUD_NAME || !process.env.CLOUDINARY_API_KEY || !process.env.CLOUDINARY_API_SECRET) {
+      console.error('❌ Cloudinary environment variables not set');
+      return new Response(
+        JSON.stringify({ 
+          error: 'Image upload not configured. Please set CLOUDINARY environment variables in Vercel.' 
+        }), 
+        { status: 500, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
     const form = await req.formData();
     const file = form.get('file');
     
@@ -50,10 +61,13 @@ export async function POST(req: NextRequest) {
       }
     );
   } catch (e: any) {
-    console.error('Upload error:', e);
+    console.error('❌ Upload error:', e);
     return new Response(
-      JSON.stringify({ error: e.message || 'Upload failed' }), 
-      { status: 500 }
+      JSON.stringify({ 
+        error: e.message || 'Upload failed',
+        details: 'Check Vercel logs for details. Ensure CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, and CLOUDINARY_API_SECRET are set in Vercel environment variables.'
+      }), 
+      { status: 500, headers: { 'Content-Type': 'application/json' } }
     );
   }
 }
