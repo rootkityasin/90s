@@ -12,6 +12,29 @@ export default function AddProductForm({ onClose }: { onClose?: () => void }) {
   const [images, setImages] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [productCode, setProductCode] = useState('');
+
+  // Color options
+  const colorOptions = ['Black', 'White', 'Gray', 'Navy', 'Khaki', 'Olive', 'Brown', 'Beige', 'Red', 'Blue', 'Green'];
+  
+  // Size options
+  const sizeOptions = ['XS', 'S', 'M', 'L', 'XL', 'XXL', '28', '30', '32', '34', '36', '38'];
+
+  // Auto-generate SKU when color or size changes
+  const updateVariantWithAutoSKU = (i: number, patch: Partial<Variant>) => {
+    setVariants(v => v.map((vv, idx) => {
+      if (idx !== i) return vv;
+      const updated = { ...vv, ...patch };
+      
+      // Auto-generate SKU if productCode exists
+      if (productCode && (patch.color !== undefined || patch.size !== undefined)) {
+        const suffix = i === 0 ? '' : `-${i + 1}`;
+        updated.sku = `${productCode.toUpperCase()}${suffix}`;
+      }
+      
+      return updated;
+    }));
+  };
 
   async function handleUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const files = e.target.files;
@@ -45,7 +68,10 @@ export default function AddProductForm({ onClose }: { onClose?: () => void }) {
   }
 
   const addVariant = () => {
-    setVariants(v => [...v, { id: crypto.randomUUID(), sku:'', color:'', size:'', retailPriceBDT:0 }]);
+    const newIndex = variants.length;
+    const suffix = newIndex === 0 ? '' : `-${newIndex + 1}`;
+    const sku = productCode ? `${productCode.toUpperCase()}${suffix}` : '';
+    setVariants(v => [...v, { id: crypto.randomUUID(), sku, color:'', size:'', retailPriceBDT:0 }]);
   };
   const updateVariant = (i: number, patch: Partial<Variant>) => {
     setVariants(v => v.map((vv,idx) => idx===i? { ...vv, ...patch }: vv));
@@ -54,6 +80,39 @@ export default function AddProductForm({ onClose }: { onClose?: () => void }) {
 
   const handleSubmit = async (formData: FormData) => {
     setSaving(true);
+    
+    // Validate images
+    if (images.length === 0) {
+      alert('Please upload at least 1 image');
+      setSaving(false);
+      return;
+    }
+    
+    // Validate all variants have required fields
+    for (let i = 0; i < variants.length; i++) {
+      const v = variants[i];
+      if (!v.sku) {
+        alert(`Variant ${i + 1}: SKU is required`);
+        setSaving(false);
+        return;
+      }
+      if (!v.color) {
+        alert(`Variant ${i + 1}: Color is required`);
+        setSaving(false);
+        return;
+      }
+      if (!v.size) {
+        alert(`Variant ${i + 1}: Size is required`);
+        setSaving(false);
+        return;
+      }
+      if (!v.retailPriceBDT || v.retailPriceBDT <= 0) {
+        alert(`Variant ${i + 1}: Price must be greater than 0`);
+        setSaving(false);
+        return;
+      }
+    }
+    
     try {
       const result = await createProduct(formData);
       if (result.product) {
@@ -74,16 +133,54 @@ export default function AddProductForm({ onClose }: { onClose?: () => void }) {
   };
 
   return (
-    <form action={handleSubmit} style={{ display:'flex', flexDirection:'column', gap:'1.2rem', maxWidth:1000 }}>
+    <>
+      <style jsx>{`
+        input[type="number"]::-webkit-outer-spin-button,
+        input[type="number"]::-webkit-inner-spin-button {
+          -webkit-appearance: none;
+          margin: 0;
+        }
+        input[type="number"] {
+          -moz-appearance: textfield;
+        }
+      `}</style>
+      <form action={handleSubmit} style={{ display:'flex', flexDirection:'column', gap:'1.2rem', maxWidth:1000 }}>
       <div style={{ display:'grid', gap:'.8rem', gridTemplateColumns:'repeat(auto-fit,minmax(180px,1fr))' }}>
-        <label style={fieldLabelStyle}><span className="flab">Slug</span><input name="slug" placeholder="auto-from-title" style={inputBoxStyle} /></label>
-        <label style={fieldLabelStyle}><span className="flab">Title</span><input name="title" required style={inputBoxStyle} /></label>
-        <label style={fieldLabelStyle}><span className="flab">Category</span><input name="category" required style={inputBoxStyle} /></label>
-  <label style={fieldLabelStyle}><span className="flab">Subcategory</span><input name="subCategory" placeholder="e.g. Baggy" style={inputBoxStyle} /></label>
-  <label style={fieldLabelStyle}><span className="flab">Product Code</span><input name="productCode" placeholder="Short code e.g. TRS-01" style={inputBoxStyle} /></label>
-        <label style={fieldLabelStyle}><span className="flab">Hero Image</span><input name="heroImage" placeholder="Will auto-set from first uploaded image" style={inputBoxStyle} /></label>
+        <label style={fieldLabelStyle}>
+          <span className="flab">Product Code *</span>
+          <input 
+            name="productCode" 
+            placeholder="e.g. TRS-01" 
+            required 
+            style={inputBoxStyle}
+            value={productCode}
+            onChange={(e) => {
+              const code = e.target.value;
+              setProductCode(code);
+              // Update all variant SKUs
+              if (code) {
+                setVariants(v => v.map((vv, idx) => ({
+                  ...vv,
+                  sku: `${code.toUpperCase()}${idx === 0 ? '' : `-${idx + 1}`}`
+                })));
+              }
+            }}
+          />
+        </label>
+        <label style={fieldLabelStyle}>
+          <span className="flab">Base *</span>
+          <select name="base" required style={inputBoxStyle}>
+            <option value="">Select base...</option>
+            <option value="retail">Retail</option>
+            <option value="client">Client (Wholesale)</option>
+          </select>
+        </label>
+        <label style={fieldLabelStyle}><span className="flab">Title *</span><input name="title" required style={inputBoxStyle} /></label>
+        <label style={fieldLabelStyle}><span className="flab">Category *</span><input name="category" required style={inputBoxStyle} /></label>
+        <label style={fieldLabelStyle}><span className="flab">Subcategory</span><input name="subCategory" placeholder="e.g. Baggy" style={inputBoxStyle} /></label>
+        <label style={fieldLabelStyle}><span className="flab">Hero Image (Auto)</span><input name="heroImage" placeholder="Auto-set from first uploaded image" style={{ ...inputBoxStyle, background: '#f5f5f5', cursor: 'not-allowed' }} readOnly /></label>
         <label style={{ ...fieldLabelStyle, gridColumn:'1 / -1' }}><span className="flab">Description</span><textarea name="description" rows={3} placeholder="Product description..." style={{ ...inputBoxStyle, resize:'vertical' }} /></label>
-        <label style={{ ...fieldLabelStyle, gridColumn:'1 / -1' }}><span className="flab">Fabric Details</span><textarea name="fabricDetails" rows={2} placeholder="95% Cotton / 5% Elastane • Pre-washed • Colorfast" style={{ ...inputBoxStyle, resize:'vertical' }} /></label>
+        <label style={{ ...fieldLabelStyle, gridColumn:'1 / -1' }}><span className="flab">Fabric Details *</span><textarea name="fabricDetails" rows={2} placeholder="95% Cotton / 5% Elastane • Pre-washed • Colorfast" style={{ ...inputBoxStyle, resize:'vertical' }} required /></label>
         <label style={{ ...fieldLabelStyle, gridColumn:'1 / -1' }}><span className="flab">Care Instructions</span><textarea name="careInstructions" rows={2} placeholder="Care: Cold wash, inside out, no bleach, tumble dry low." style={{ ...inputBoxStyle, resize:'vertical' }} /></label>
       </div>
       
@@ -133,37 +230,71 @@ export default function AddProductForm({ onClose }: { onClose?: () => void }) {
       </div>
 
       <fieldset style={{ border:'1px solid #333', padding:'1rem', borderRadius:8 }}>
-        <legend style={{ fontSize:'.8rem', padding:'0 .4rem' }}>Variants</legend>
+        <legend style={{ fontSize:'.8rem', padding:'0 .4rem' }}>Variants *</legend>
         <input type="hidden" name="variantCount" value={variants.length} />
         <div style={{ display:'grid', gap:'.75rem' }}>
           {variants.map((v,i) => (
             <div key={v.id} className="variant-row">
               <input type="hidden" name={`variant_id_${i}`} value={v.id} />
               <label>
-                SKU
-                <input name={`variant_sku_${i}`} value={v.sku} onChange={e=>updateVariant(i,{sku:e.target.value})} required style={inputBoxStyle} />
+                SKU (Auto) *
+                <input 
+                  name={`variant_sku_${i}`} 
+                  value={v.sku} 
+                  readOnly
+                  required
+                  style={{ ...inputBoxStyle, background: '#f5f5f5', color: '#666', cursor: 'not-allowed' }} 
+                />
               </label>
               <label>
-                Color
-                <input name={`variant_color_${i}`} value={v.color} onChange={e=>updateVariant(i,{color:e.target.value})} style={inputBoxStyle} />
+                Color *
+                <select 
+                  name={`variant_color_${i}`} 
+                  value={v.color} 
+                  onChange={e=>updateVariantWithAutoSKU(i,{color:e.target.value})} 
+                  style={inputBoxStyle}
+                  required
+                >
+                  <option value="">Choose color...</option>
+                  {colorOptions.map(c => <option key={c} value={c}>{c}</option>)}
+                </select>
               </label>
               <label>
-                Size
-                <input name={`variant_size_${i}`} value={v.size} onChange={e=>updateVariant(i,{size:e.target.value})} style={inputBoxStyle} />
+                Size *
+                <select 
+                  name={`variant_size_${i}`} 
+                  value={v.size} 
+                  onChange={e=>updateVariantWithAutoSKU(i,{size:e.target.value})} 
+                  style={inputBoxStyle}
+                  required
+                >
+                  <option value="">Choose size...</option>
+                  {sizeOptions.map(s => <option key={s} value={s}>{s}</option>)}
+                </select>
               </label>
               <label>
-                Price
-                <input name={`variant_price_${i}`} type="number" value={v.retailPriceBDT} onChange={e=>updateVariant(i,{retailPriceBDT:parseInt(e.target.value,10)||0})} style={inputBoxStyle} />
+                Price (BDT) *
+                <input 
+                  name={`variant_price_${i}`} 
+                  type="number" 
+                  value={v.retailPriceBDT || ''} 
+                  onChange={e=>updateVariant(i,{retailPriceBDT:parseInt(e.target.value,10)||0})} 
+                  style={numberInputStyle}
+                  required
+                  min="1"
+                />
               </label>
-              <button 
-                type="button" 
-                onClick={()=>removeVariant(i)} 
-                style={buttonStyles.small}
-                title="Remove variant"
-              >×</button>
+              {variants.length > 1 && (
+                <button 
+                  type="button" 
+                  onClick={()=>removeVariant(i)} 
+                  style={buttonStyles.small}
+                  title="Remove variant"
+                >×</button>
+              )}
             </div>
           ))}
-          <button type="button" onClick={addVariant} style={buttonStyles.secondary}>Add Variant</button>
+          <button type="button" onClick={addVariant} style={buttonStyles.secondary}>+ Add Another Variant</button>
         </div>
       </fieldset>
 
@@ -173,6 +304,7 @@ export default function AddProductForm({ onClose }: { onClose?: () => void }) {
         </button>
       </div>
     </form>
+    </>
   );
 }
 
@@ -195,6 +327,13 @@ const inputBoxStyle: React.CSSProperties = {
   boxShadow:'0 0 0 1px #1c2844 inset',
   height:'32px',
   boxSizing:'border-box'
+};
+
+// CSS to hide number input arrows
+const numberInputStyle: React.CSSProperties = {
+  ...inputBoxStyle,
+  MozAppearance: 'textfield' as any,
+  WebkitAppearance: 'none' as any,
 };
 
 // Modern button styles

@@ -14,8 +14,8 @@ type Props = {
   sales: SalesSnapshot[];
 };
 
-export default function AdminClient({ productsInitial, sales }: Props) {
-  const rawProducts = productsInitial;
+export default function AdminClient({ productsInitial = [], sales = [] }: Props) {
+  const rawProducts = productsInitial || [];
   const revenueSeries = sales.map(s => s.revenueBDT);
   const recent = revenueSeries.slice(-8);
   // search/filter/sort (same pattern as retail page)

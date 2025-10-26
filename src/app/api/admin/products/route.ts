@@ -8,7 +8,7 @@ export const dynamic = 'force-dynamic';
 // GET - List all products
 export async function GET(request: NextRequest) {
   try {
-    const products = listProducts();
+    const products = await listProducts();
     return NextResponse.json({ success: true, products }, { status: 200 });
   } catch (error: any) {
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
@@ -46,12 +46,13 @@ export async function POST(request: NextRequest) {
       fabricDetails: body.fabricDetails,
       careInstructions: body.careInstructions,
       category: body.category,
+      base: body.base || 'retail', // Default to retail if not specified
       heroImage,
       images: body.images || [],
       variants: body.variants
     };
 
-    const newProduct = addProduct(productData);
+    const newProduct = await addProduct(productData);
     
     // Revalidate pages
     revalidatePath('/retail');
@@ -73,16 +74,16 @@ export async function PUT(request: NextRequest) {
   try {
     const body = await request.json();
     
-    if (!body.slug && !body.id) {
-      return NextResponse.json({ success: false, error: 'Product slug or id is required' }, { status: 400 });
+    if (!body.productCode) {
+      return NextResponse.json({ success: false, error: 'Product code is required' }, { status: 400 });
     }
 
-    const productId = body.slug || body.id;
+    const productCode = body.productCode;
     
-    // Prepare update data (exclude id/slug from patch)
-    const { id, slug, ...updateData } = body;
+    // Prepare update data (exclude productCode from patch since it's the identifier)
+    const { productCode: _, ...updateData } = body;
     
-    const updatedProduct = updateProduct(productId, updateData);
+    const updatedProduct = await updateProduct(productCode, updateData);
     
     if (!updatedProduct) {
       return NextResponse.json({ success: false, error: 'Product not found' }, { status: 404 });
@@ -107,13 +108,13 @@ export async function PUT(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const productId = searchParams.get('id') || searchParams.get('slug');
+    const productCode = searchParams.get('productCode');
     
-    if (!productId) {
-      return NextResponse.json({ success: false, error: 'Product id or slug is required' }, { status: 400 });
+    if (!productCode) {
+      return NextResponse.json({ success: false, error: 'Product code is required' }, { status: 400 });
     }
 
-    const success = deleteProduct(productId);
+    const success = await deleteProduct(productCode);
     
     if (!success) {
       return NextResponse.json({ success: false, error: 'Product not found' }, { status: 404 });
@@ -125,7 +126,7 @@ export async function DELETE(request: NextRequest) {
     revalidatePath('/admin');
     
     // Broadcast delete
-    broadcastProductDelete(productId);
+    broadcastProductDelete(productCode);
     
     return NextResponse.json({ success: true, message: 'Product deleted successfully' }, { status: 200 });
   } catch (error: any) {

@@ -1,18 +1,36 @@
 'use server';
 import { revalidatePath } from 'next/cache';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+// Helper to make internal API calls that work in both localhost and Vercel
+async function internalFetch(path: string, options: RequestInit) {
+  const baseUrl = process.env.VERCEL_URL 
+    ? `https://${process.env.VERCEL_URL}`
+    : 'http://localhost:3000';
+  
+  const url = `${baseUrl}${path}`;
+  return fetch(url, options);
+}
 
 export async function createProduct(formData: FormData) {
   const title = (formData.get('title') || '').toString();
   if (!title) return { error: 'Title required' };
-  const slug = (formData.get('slug') || title.toLowerCase().replace(/[^a-z0-9]+/g,'-')).toString();
+  
+  const productCode = (formData.get('productCode') || '').toString();
+  if (!productCode) return { error: 'Product Code required' };
+  
+  // Auto-generate slug from productCode
+  const slug = productCode.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+  
   const description = (formData.get('description') || '').toString();
   const subCategory = (formData.get('subCategory') || '').toString();
-  const productCode = (formData.get('productCode') || '').toString();
   const fabricDetails = (formData.get('fabricDetails') || '').toString();
   const careInstructions = (formData.get('careInstructions') || '').toString();
   const category = (formData.get('category') || '').toString();
+  const base = (formData.get('base') || 'retail').toString() as 'retail' | 'client';
+  
+  if (!base || (base !== 'retail' && base !== 'client')) {
+    return { error: 'Base must be either "retail" or "client"' };
+  }
   
   // Handle images (comma separated)
   const imagesCSV = (formData.get('images') || '').toString();
@@ -46,22 +64,43 @@ export async function createProduct(formData: FormData) {
   }
   
   try {
-    const response = await fetch(`${API_BASE}/api/admin/products`, {
+    const response = await internalFetch('/api/admin/products', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ slug, title, description, subCategory, productCode, fabricDetails, careInstructions, category, heroImage, images, variants }),
+      body: JSON.stringify({
+        slug,
+        title,
+        description,
+        subCategory,
+        productCode,
+        fabricDetails,
+        careInstructions,
+        category,
+        base,
+        heroImage,
+        images,
+        variants
+      }),
       cache: 'no-store'
     });
+    
     const data = await response.json();
-    if (!data.success) return { error: data.error || 'Failed to create product' };
+    
+    if (!data.success) {
+      return { error: data.error || 'Failed to create product' };
+    }
+    
     return { product: data.product };
   } catch (error: any) {
+    console.error('[createProduct] Error:', error);
     return { error: error.message || 'Failed to create product' };
   }
 }
 
-export async function editProduct(slug: string, formData: FormData) {
-  const patch: any = { slug };
+export async function editProduct(productCode: string, formData: FormData) {
+  console.log('[editProduct] Updating product with code:', productCode);
+  
+  const patch: any = { productCode };
   if (formData.get('title')) patch.title = formData.get('title');
   if (formData.get('description')) patch.description = formData.get('description');
   if (formData.get('subCategory') !== null) patch.subCategory = formData.get('subCategory');
@@ -70,29 +109,42 @@ export async function editProduct(slug: string, formData: FormData) {
   if (formData.get('careInstructions') !== null) patch.careInstructions = formData.get('careInstructions');
   if (formData.get('heroImage')) patch.heroImage = formData.get('heroImage');
   
+  console.log('[editProduct] Patch data:', Object.keys(patch));
+  
   try {
-    const response = await fetch(`${API_BASE}/api/admin/products`, {
+    const response = await internalFetch('/api/admin/products', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(patch),
       cache: 'no-store'
     });
+    
     const data = await response.json();
-    if (!data.success) return { error: data.error || 'Failed to update product' };
+    
+    console.log('[editProduct] Response:', data.success ? 'SUCCESS' : 'FAILED');
+    
+    if (!data.success) {
+      return { error: data.error || 'Failed to update product' };
+    }
+    
     return { product: data.product };
   } catch (error: any) {
+    console.error('[editProduct] Error:', error);
     return { error: error.message || 'Failed to update product' };
   }
 }
 
 export async function fullEditProduct(formData: FormData) {
   try {
-    const productSlug = (formData.get('productId') || '').toString();
-    if (!productSlug) return { error: 'Missing product identifier' };
+    const productCode = (formData.get('productId') || '').toString();
+    console.log('[fullEditProduct] Editing product with code:', productCode);
     
-    const patch: any = { slug: productSlug };
-    const fields = ['slug','title','description','category','heroImage'];
+    if (!productCode) return { error: 'Missing product identifier' };
+    
+    const patch: any = { productCode };
+    const fields = ['title','description','category','heroImage','base'];
     const optionalTextFields = ['subCategory','productCode','fabricDetails','careInstructions'];
+    
     fields.forEach(f => { 
       const val = formData.get(f);
       if (val !== null) patch[f] = val.toString(); 
@@ -102,8 +154,15 @@ export async function fullEditProduct(formData: FormData) {
       if (val !== null) patch[f] = val.toString(); 
     });
     
+    // Auto-generate slug from productCode if productCode is being updated
+    if (patch.productCode) {
+      patch.slug = patch.productCode.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+    }
+    
     const imagesCSV = (formData.get('images') || '').toString();
-    patch.images = imagesCSV.trim() ? imagesCSV.split(',').map(s=>s.trim()).filter(Boolean) : [];
+    if (imagesCSV.trim()) {
+      patch.images = imagesCSV.split(',').map(s=>s.trim()).filter(Boolean);
+    }
     
     const variantCount = parseInt((formData.get('variantCount') || '0').toString(),10);
     const variants: any[] = [];
@@ -121,32 +180,48 @@ export async function fullEditProduct(formData: FormData) {
     }
     if (variants.length) patch.variants = variants;
     
-    const response = await fetch(`${API_BASE}/api/admin/products`, {
+    console.log('[fullEditProduct] Patch keys:', Object.keys(patch), 'variants:', variants.length);
+    
+    const response = await internalFetch('/api/admin/products', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(patch),
       cache: 'no-store'
     });
+    
     const data = await response.json();
-    if (!data.success) return { error: data.error || 'Product not found or update failed' };
+    
+    console.log('[fullEditProduct] Response:', data.success ? 'SUCCESS' : 'FAILED');
+    
+    if (!data.success) {
+      return { error: data.error || 'Product not found or update failed' };
+    }
+    
     return { product: data.product };
   } catch (error: any) {
+    console.error('[fullEditProduct] Error:', error);
     return { error: error.message || 'Update failed' };
   }
 }
 
-export async function deleteProduct(productSlug: string) {
-  if (!productSlug) return { error: 'Missing product identifier' };
+export async function deleteProduct(productCode: string) {
+  if (!productCode) return { error: 'Missing product identifier' };
   
   try {
-    const response = await fetch(`${API_BASE}/api/admin/products?slug=${encodeURIComponent(productSlug)}`, {
+    const response = await internalFetch(`/api/admin/products?productCode=${encodeURIComponent(productCode)}`, {
       method: 'DELETE',
       cache: 'no-store'
     });
+    
     const data = await response.json();
-    if (!data.success) return { error: data.error || 'Failed to delete product' };
+    
+    if (!data.success) {
+      return { error: data.error || 'Failed to delete product' };
+    }
+    
     return { success: true };
   } catch (error: any) {
+    console.error('[deleteProduct] Error:', error);
     return { error: error.message || 'Failed to delete product' };
   }
 }

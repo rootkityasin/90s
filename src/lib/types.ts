@@ -16,6 +16,7 @@ export type Product = {
   fabricDetails?: string;
   careInstructions?: string;
   category: string;
+  base: 'retail' | 'client'; // Product base: retail or client (wholesale)
   heroImage: string;
   // Additional gallery images (including heroImage as first element optionally)
   images?: string[]; // ordered list of image asset paths

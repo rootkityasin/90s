@@ -7,9 +7,9 @@ export const metadata = { title: "Client Search | 90's Legacy" };
 
 type SearchParams = { q?: string };
 
-export default function ClientSearchPage({ searchParams }: { searchParams: SearchParams }) {
+export default async function ClientSearchPage({ searchParams }: { searchParams: SearchParams }) {
   const q = (searchParams.q || '').toLowerCase();
-  const all = listProducts();
+  const all = await listProducts();
   enforceClientAccess('/client/search');
   const results = q
     ? all.filter(p =>

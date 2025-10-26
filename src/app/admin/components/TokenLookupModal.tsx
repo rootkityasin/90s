@@ -1,6 +1,5 @@
 "use client";
 import React, { useState } from 'react';
-import { getProductBySKU } from '../../../lib/data/store';
 import type { Product, Variant } from '../../../lib/types';
 
 interface TokenDetails {
@@ -16,7 +15,7 @@ export default function TokenLookupModal() {
   const [details, setDetails] = useState<TokenDetails | null>(null);
   const [error, setError] = useState('');
 
-  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError('');
     setDetails(null);
@@ -45,12 +44,16 @@ export default function TokenLookupModal() {
         }
       }
 
-      const product = getProductBySKU(sku);
-      if (!product) {
+      // Fetch product from API instead of direct import
+      const response = await fetch(`/api/client/products?sku=${encodeURIComponent(sku)}`);
+      const data = await response.json();
+      
+      if (!data.success || !data.product) {
         throw new Error('Product not found for the given SKU.');
       }
 
-      const variant = product.variants.find(v => v.sku === sku) ?? product.variants[0];
+      const product = data.product;
+      const variant = product.variants.find((v: Variant) => v.sku === sku) ?? product.variants[0];
       if (!variant) {
         throw new Error('Variant not found for the given SKU.');
       }

@@ -2,7 +2,6 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { listProducts } from '../../lib/data/store';
 import { WHATSAPP_PHONE, FACEBOOK_PAGE_URL, INSTAGRAM_URL } from '../../lib/config';
 // Reuse same SVG icons as hero for consistency
 const icons = {
@@ -19,10 +18,25 @@ const icons = {
 
 export default function Footer({ role, clientAccess }: { role?: string; clientAccess?: boolean }) {
   const year = new Date().getFullYear();
-  const categories = React.useMemo(
-    () => Array.from(new Set(listProducts().map(p => p.category))).sort(),
-    []
-  );
+  const [categories, setCategories] = React.useState<string[]>([]);
+  
+  React.useEffect(() => {
+    // Fetch categories from API
+    async function fetchCategories() {
+      try {
+        const res = await fetch('/api/retail/products');
+        const data = await res.json();
+        if (data.success && data.products) {
+          const cats = Array.from(new Set(data.products.map((p: any) => p.category))).sort();
+          setCategories(cats as string[]);
+        }
+      } catch (error) {
+        console.error('Failed to fetch categories:', error);
+      }
+    }
+    fetchCategories();
+  }, []);
+  
   const pathname = usePathname();
   const inClientMode = pathname.startsWith('/client') || role === 'client' || clientAccess;
   const shopHref = inClientMode ? '/client/catalog' : '/retail';

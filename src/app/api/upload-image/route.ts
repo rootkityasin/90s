@@ -1,6 +1,5 @@
 import { NextRequest } from 'next/server';
-import { writeFile, mkdir } from 'fs/promises';
-import path from 'path';
+import cloudinary from '../../../lib/cloudinary';
 
 export const dynamic = 'force-dynamic';
 
@@ -8,21 +7,53 @@ export async function POST(req: NextRequest) {
   try {
     const form = await req.formData();
     const file = form.get('file');
+    
     if (!file || typeof file === 'string') {
       return new Response(JSON.stringify({ error: 'No file' }), { status: 400 });
     }
+
+    // Convert file to buffer
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
-    const uploadsDir = path.join(process.cwd(), 'public', 'uploads');
-    await mkdir(uploadsDir, { recursive: true });
-    const safeName = file.name.replace(/[^a-zA-Z0-9_.-]/g,'_');
-    const filename = `${Date.now()}-${safeName}`;
-    const fullPath = path.join(uploadsDir, filename);
-  // Cast to any to satisfy TS in this constrained environment
-  await writeFile(fullPath, buffer as any);
-    const publicPath = `/uploads/${filename}`;
-    return new Response(JSON.stringify({ path: publicPath }), { status: 200, headers: { 'Content-Type':'application/json' }});
-  } catch (e:any) {
-    return new Response(JSON.stringify({ error: e.message || 'Upload failed' }), { status: 500 });
+
+    // Upload to Cloudinary
+    const uploadResponse = await new Promise((resolve, reject) => {
+      const uploadStream = cloudinary.uploader.upload_stream(
+        {
+          folder: '90s-store/products', // Organize images in folder
+          resource_type: 'auto',
+          // No transformation - keep original resolution
+          quality: 'auto:best', // Best quality, no compression
+        },
+        (error, result) => {
+          if (error) reject(error);
+          else resolve(result);
+        }
+      );
+      
+      uploadStream.end(buffer);
+    });
+
+    const result = uploadResponse as any;
+    
+    // Return Cloudinary URL
+    return new Response(
+      JSON.stringify({ 
+        path: result.secure_url,
+        publicId: result.public_id,
+        width: result.width,
+        height: result.height
+      }), 
+      { 
+        status: 200, 
+        headers: { 'Content-Type': 'application/json' }
+      }
+    );
+  } catch (e: any) {
+    console.error('Upload error:', e);
+    return new Response(
+      JSON.stringify({ error: e.message || 'Upload failed' }), 
+      { status: 500 }
+    );
   }
 }

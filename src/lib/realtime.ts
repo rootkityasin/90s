@@ -11,10 +11,11 @@ function send(client: SSEClient, data: string) {
   try { client.write(data); } catch { /* ignore broken pipe */ }
 }
 
-export function addClient(client: SSEClient) {
+export async function addClient(client: SSEClient) {
   clients.push(client);
   // send initial snapshot
-  const snapshot = JSON.stringify(listProducts());
+  const products = await listProducts();
+  const snapshot = JSON.stringify(products);
   send(client, `event: snapshot\n` + `data: ${snapshot}\n\n`);
 }
 

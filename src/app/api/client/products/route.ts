@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { listProducts, getProductBySlug, getProductBySKU, generateClientToken } from '../../../../lib/data/store';
+import { listProductsByBase, getProductByCode, getProductBySKU, generateClientToken } from '../../../../lib/data/store';
 
 export const dynamic = 'force-dynamic';
 
@@ -7,13 +7,18 @@ export const dynamic = 'force-dynamic';
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const slug = searchParams.get('slug');
+    const productCode = searchParams.get('productCode');
     const sku = searchParams.get('sku');
     
-    if (slug) {
-      // Get single product by slug
-      const product = getProductBySlug(slug);
+    if (productCode) {
+      // Get single product by productCode
+      const product = await getProductByCode(productCode);
       if (!product) {
+        return NextResponse.json({ success: false, error: 'Product not found' }, { status: 404 });
+      }
+      
+      // Only return if it's a client product
+      if (product.base !== 'client') {
         return NextResponse.json({ success: false, error: 'Product not found' }, { status: 404 });
       }
       
@@ -31,8 +36,13 @@ export async function GET(request: NextRequest) {
     
     if (sku) {
       // Get product by SKU and return with token
-      const product = getProductBySKU(sku);
+      const product = await getProductBySKU(sku);
       if (!product) {
+        return NextResponse.json({ success: false, error: 'Product not found' }, { status: 404 });
+      }
+      
+      // Only return if it's a client product
+      if (product.base !== 'client') {
         return NextResponse.json({ success: false, error: 'Product not found' }, { status: 404 });
       }
       
@@ -44,8 +54,8 @@ export async function GET(request: NextRequest) {
       }, { status: 200 });
     }
     
-    // Get all products
-    const products = listProducts();
+    // Get all client products
+    const products = await listProductsByBase('client');
     
     // Optional filters
     const category = searchParams.get('category');

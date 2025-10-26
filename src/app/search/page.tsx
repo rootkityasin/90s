@@ -4,9 +4,9 @@ import { ProductCard } from '../components/ProductCard';
 
 export const metadata = { title: 'Search | 90\'s Legacy' };
 
-export default function SearchPage({ searchParams }: { searchParams: { q?: string } }) {
+export default async function SearchPage({ searchParams }: { searchParams: { q?: string } }) {
   const q = (searchParams.q || '').toLowerCase();
-  const all = listProducts();
+  const all = await listProducts();
   const results = q ? all.filter(p => p.title.toLowerCase().includes(q) || p.description.toLowerCase().includes(q)) : [];
   return (
     <div className="container" style={{ marginTop:'1.4rem', marginBottom:'3.4rem' }}>

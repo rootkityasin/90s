@@ -1,7 +1,6 @@
 "use client";
 import React from 'react';
 import Link from 'next/link';
-import { listProducts } from '../../lib/data/store';
 import { usePathname } from 'next/navigation';
 
 type CategoryDropdownProps = {
@@ -13,14 +12,23 @@ export function CategoryDropdown({ target }: CategoryDropdownProps = {}) {
   const rootRef = React.useRef<HTMLDivElement | null>(null);
   const pathname = usePathname();
   // Derive categories from product data to keep in sync with product list
-  const [cats, setCats] = React.useState<string[]>(() => {
-    const all = listProducts();
-    return Array.from(new Set(all.map(p => p.category))).sort();
-  });
+  const [cats, setCats] = React.useState<string[]>([]);
+  
   React.useEffect(() => {
-    // In case product list updates at runtime via SSE
-    const all = listProducts();
-    setCats(Array.from(new Set(all.map(p => p.category))).sort());
+    // Fetch categories from API
+    async function fetchCategories() {
+      try {
+        const res = await fetch('/api/retail/products');
+        const data = await res.json();
+        if (data.success && data.products) {
+          const categories = Array.from(new Set(data.products.map((p: any) => p.category))).sort();
+          setCats(categories as string[]);
+        }
+      } catch (error) {
+        console.error('Failed to fetch categories:', error);
+      }
+    }
+    fetchCategories();
   }, []);
 
   const resolvedTarget = React.useMemo(() => {

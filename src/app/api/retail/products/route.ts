@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { listProducts, getProductBySlug } from '../../../../lib/data/store';
+import { listProductsByBase, getProductByCode } from '../../../../lib/data/store';
 
 export const dynamic = 'force-dynamic';
 
@@ -7,19 +7,23 @@ export const dynamic = 'force-dynamic';
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const slug = searchParams.get('slug');
+    const productCode = searchParams.get('productCode');
     
-    if (slug) {
-      // Get single product by slug
-      const product = getProductBySlug(slug);
+    if (productCode) {
+      // Get single product by productCode
+      const product = await getProductByCode(productCode);
       if (!product) {
+        return NextResponse.json({ success: false, error: 'Product not found' }, { status: 404 });
+      }
+      // Only return if it's a retail product
+      if (product.base !== 'retail') {
         return NextResponse.json({ success: false, error: 'Product not found' }, { status: 404 });
       }
       return NextResponse.json({ success: true, product }, { status: 200 });
     }
     
-    // Get all products
-    const products = listProducts();
+    // Get all retail products
+    const products = await listProductsByBase('retail');
     
     // Optional filters
     const category = searchParams.get('category');

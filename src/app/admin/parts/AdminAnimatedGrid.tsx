@@ -12,10 +12,10 @@ export default function AdminAnimatedGrid({ products, onFullEdit }: { products: 
   const router = useRouter();
   const [saving, setSaving] = useState<string | null>(null);
 
-  const handleQuickEdit = async (productSlug: string, formData: FormData) => {
-    setSaving(productSlug);
+  const handleQuickEdit = async (productCode: string, formData: FormData) => {
+    setSaving(productCode);
     try {
-      await editProduct(productSlug, formData);
+      await editProduct(productCode, formData);
       router.refresh();
     } catch (error) {
       console.error('Quick edit error:', error);
@@ -29,20 +29,39 @@ export default function AdminAnimatedGrid({ products, onFullEdit }: { products: 
     <motion.div className="grid" variants={container} initial="hidden" animate="show">
       {products.map(p => (
         <motion.div key={p.id} className="card" variants={item} whileHover={{ y:-6 }}>
-          <img src={p.heroImage} alt="" style={{ width:'100%', height:120, objectFit:'cover', borderRadius:6 }} />
+          <div style={{ position: 'relative' }}>
+            <img src={p.heroImage} alt="" style={{ width:'100%', height:120, objectFit:'cover', borderRadius:6 }} />
+            {p.base && (
+              <span style={{ 
+                position: 'absolute', 
+                top: 6, 
+                right: 6, 
+                background: p.base === 'retail' ? '#2563eb' : '#16a34a', 
+                color: '#fff', 
+                fontSize: '.55rem', 
+                padding: '3px 8px', 
+                borderRadius: 4, 
+                fontWeight: 600,
+                letterSpacing: '.5px',
+                textTransform: 'uppercase'
+              }}>
+                {p.base}
+              </span>
+            )}
+          </div>
           <h3 style={{ marginTop:'.5rem' }}>{p.title}</h3>
           <p style={{ fontSize:'.65rem' }}>{p.subCategory ? `${p.category} • ${p.subCategory}` : p.category}</p>
           {p.productCode && <p style={{ fontSize:'.6rem', letterSpacing:'.12em', textTransform:'uppercase', opacity:.7 }}>Code: {p.productCode}</p>}
           <p style={{ fontSize:'.7rem' }}>Variants: {p.variants.length}</p>
           <details style={{ marginTop:'.6rem' }}>
             <summary style={{ cursor:'pointer', fontSize:'.7rem' }}>Quick Edit</summary>
-            <form action={(fd) => handleQuickEdit(p.slug, fd)} style={{ display:'grid', gap:'.4rem', marginTop:'.5rem' }}>
+            <form action={(fd) => handleQuickEdit(p.productCode!, fd)} style={{ display:'grid', gap:'.4rem', marginTop:'.5rem' }}>
               <input name="title" placeholder="Title" defaultValue={p.title} />
               <input name="heroImage" placeholder="Hero Image URL" defaultValue={p.heroImage} />
               <textarea name="description" placeholder="Description" rows={2} defaultValue={p.description} />
               <input name="productCode" placeholder="Product Code" defaultValue={p.productCode || ''} />
-              <button type="submit" disabled={saving === p.slug} style={{ fontSize:'.7rem', padding:'.4rem .6rem', opacity: saving === p.slug ? 0.6 : 1 }}>
-                {saving === p.slug ? 'Saving...' : 'Save'}
+              <button type="submit" disabled={saving === p.productCode} style={{ fontSize:'.7rem', padding:'.4rem .6rem', opacity: saving === p.productCode ? 0.6 : 1 }}>
+                {saving === p.productCode ? 'Saving...' : 'Save'}
               </button>
             </form>
           </details>

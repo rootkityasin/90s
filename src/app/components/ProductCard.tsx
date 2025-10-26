@@ -7,7 +7,9 @@ import { ZoomImage } from './ZoomImage';
 
 export function ProductCard({ p, showPrice, token }: { p: Product; showPrice: boolean; token?: string }) {
   const firstVariant = p.variants[0];
-  const href = showPrice ? `/product/${p.slug}` : `/client/product/${p.slug}`;
+  // Use productCode for routing (folder is [slug] but param is treated as productCode)
+  const productIdentifier = p.productCode || p.slug;
+  const href = showPrice ? `/product/${productIdentifier}` : `/client/product/${productIdentifier}`;
   const badgeLabel = p.subCategory ? `${p.category} • ${p.subCategory}` : p.category;
   const blurb = p.description?.trim() || (p.subCategory ? `${p.category} — ${p.subCategory}` : 'View product for full details');
   const productCode = (p.productCode && p.productCode.trim()) || p.slug.toUpperCase().replace(/[^A-Z0-9]+/g,'').slice(0,12);

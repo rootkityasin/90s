@@ -1,7 +1,7 @@
 "use client";
 import React from 'react';
 import { useSearchParams } from 'next/navigation';
-import { listProducts, generateClientToken } from '../../lib/data/store';
+import { generateClientToken } from '../../lib/data/clientUtils';
 import type { Product } from '../../lib/types';
 import { ProductCard } from './ProductCard';
 import { FadeUpDiv, Stagger } from './animations';
@@ -12,11 +12,12 @@ type ProductsPageProps = {
   title: string;
   description: string;
   mode: 'retail' | 'client'; // retail shows price, client shows token
+  productsInitial: Product[]; // Initial products from server
 };
 
 // Simple wrapper component that handles fetching + layout + animations
-export function ProductsPage({ title, description, mode }: ProductsPageProps) {
-  const [rawProducts, setRawProducts] = React.useState<Product[]>(listProducts());
+export function ProductsPage({ title, description, mode, productsInitial = [] }: ProductsPageProps) {
+  const [rawProducts, setRawProducts] = React.useState<Product[]>(productsInitial || []);
   // realtime subscription (SSE)
   React.useEffect(() => {
     const ev = new EventSource('/api/realtime-products');
@@ -33,13 +34,19 @@ export function ProductsPage({ title, description, mode }: ProductsPageProps) {
       } catch {}
     });
     ev.addEventListener('snapshot', (e: MessageEvent) => {
-      try { const list: Product[] = JSON.parse(e.data); setRawProducts(list); } catch {}
+      try { 
+        const list: Product[] = JSON.parse(e.data);
+        // Ensure list is an array
+        if (Array.isArray(list)) {
+          setRawProducts(list);
+        }
+      } catch {}
     });
     return () => ev.close();
   }, []);
   const showPrice = mode === 'retail';
   // Retail enhancement: local search, category filter, sort
-  const categories = React.useMemo(() => Array.from(new Set(rawProducts.map(p => p.category))).sort(), [rawProducts]);
+  const categories = React.useMemo(() => Array.from(new Set((rawProducts || []).map(p => p.category))).sort(), [rawProducts]);
   const [q, setQ] = React.useState('');
   const [cat, setCat] = React.useState<string>('all');
   const [sort, setSort] = React.useState<'recent' | 'price-asc' | 'price-desc'>('recent');
@@ -62,9 +69,9 @@ export function ProductsPage({ title, description, mode }: ProductsPageProps) {
   // Reset visible items when filters, search, sort, or underlying data change
   React.useEffect(() => {
     setVisible(PAGE_SIZE);
-  }, [q, cat, sort, rawProducts.length]);
+  }, [q, cat, sort, (rawProducts || []).length]);
 
-  const filtered = rawProducts.filter(p => {
+  const filtered = (rawProducts || []).filter(p => {
     if (cat !== 'all' && p.category !== cat) return false;
     if (q) {
       const searchLower = q.toLowerCase();

@@ -1,29 +1,31 @@
-import { getProductBySlug, generateClientToken, listProducts } from '../../../../lib/data/store';
+import { getProductByCode, generateClientToken, listProducts } from '../../../../lib/data/store';
 import { notFound } from 'next/navigation';
 import { JsonLd, productJsonLd } from '../../../../lib/seo';
 import ProductClient from '../../../product/[slug]/ProductClient';
 import { ProductCard } from '../../../components/ProductCard';
 import { enforceClientAccess } from '../../../../lib/auth/enforceClientAccess';
 
-export function generateMetadata({ params }: { params: { slug: string } }) {
-  const p = getProductBySlug(params.slug);
+export async function generateMetadata({ params }: { params: { slug: string } }) {
+  // Note: params.slug is actually productCode now
+  const p = await getProductByCode(params.slug);
   if (!p) return {};
   return { title: `${p.title} | Client`, description: p.description };
 }
 
-export default function ClientProductPage({ params }: { params: { slug: string } }) {
+export default async function ClientProductPage({ params }: { params: { slug: string } }) {
   enforceClientAccess(`/client/product/${params.slug}`);
-  const p = getProductBySlug(params.slug);
+  // Note: params.slug is actually productCode now
+  const p = await getProductByCode(params.slug);
   if (!p) return notFound();
   const variant = p.variants[0];
-  const all = listProducts();
+  const all = await listProducts();
   const sameCategory = all.filter(sp => sp.category === p.category && sp.slug !== p.slug);
   const otherCategories = all.filter(sp => sp.category !== p.category && sp.slug !== p.slug);
   const suggestions = [...sameCategory.slice(0, 4), ...otherCategories].slice(0, 4);
 
   return (
     <main className="container" data-no-footer>
-      <JsonLd data={productJsonLd({ name: p.title, description: p.description, slug: p.slug, image: p.heroImage, price: variant.retailPriceBDT, currency: 'BDT' })} />
+      <JsonLd data={productJsonLd({ name: p.title, description: p.description, productCode: p.productCode, slug: p.slug, image: p.heroImage, price: variant.retailPriceBDT, currency: 'BDT' })} />
   <ProductClient product={p} isClient={true} />
       {suggestions.length > 0 && (
         <section style={{ marginTop: '2.2rem', marginBottom: '2.6rem' }}>
