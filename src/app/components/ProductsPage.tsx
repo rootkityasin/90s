@@ -24,6 +24,8 @@ export function ProductsPage({ title, description, mode, productsInitial = [] }:
     ev.addEventListener('productUpdate', (e: MessageEvent) => {
       try {
         const updated: Product = JSON.parse(e.data);
+        // Only add/update if it matches the current base (retail or client)
+        if (updated.base !== mode) return;
         setRawProducts(prev => {
           const idx = prev.findIndex(p => p.id === updated.id);
           if (idx === -1) return prev; // ignore if not present (or push?)
@@ -36,14 +38,14 @@ export function ProductsPage({ title, description, mode, productsInitial = [] }:
     ev.addEventListener('snapshot', (e: MessageEvent) => {
       try { 
         const list: Product[] = JSON.parse(e.data);
-        // Ensure list is an array
+        // Filter by base (retail or client) before setting
         if (Array.isArray(list)) {
-          setRawProducts(list);
+          setRawProducts(list.filter(p => p.base === mode));
         }
       } catch {}
     });
     return () => ev.close();
-  }, []);
+  }, [mode]);
   const showPrice = mode === 'retail';
   // Retail enhancement: local search, category filter, sort
   const categories = React.useMemo(() => Array.from(new Set((rawProducts || []).map(p => p.category))).sort(), [rawProducts]);
