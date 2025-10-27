@@ -62,39 +62,57 @@ export function AboutContent({ audience = 'retail' }: { audience?: AboutAudience
         <header>
           <h1 className="hero-headline about-hero-title">About 90's Legacy</h1>
           <p style={{ maxWidth: 720, lineHeight: 1.5, fontSize: '.9rem', textAlign: 'center', margin: '0 auto' }}>
-            We are a sourcing & apparel solutions studio focused on cost-smart fashion, fast sampling and reliable volume execution.
-            This page is a distilled narrative version of your portfolio PDF. Replace the placeholder copy below with precise details
-            (years, capacities, certifications, partner names) when ready.
+            A sourcing and apparel solutions studio delivering cost-smart fashion, rapid sampling, and reliable volume execution. 
+            Founded in 2023, we combine textile expertise with modern production management to help brands scale profitably.
           </p>
         </header>
 
         <Section title="Mission">
-          <p>Enable emerging and established labels to build profitable, quality apparel lines by unifying design refinement, fabric development, ethical manufacturing and agile logistics under one retro-spirited, relationship-driven roof.</p>
+          <p>Empower emerging and established fashion labels to build profitable, high-quality apparel lines through unified design refinement, fabric development, ethical manufacturing, and agile logistics—all delivered with a relationship-driven, solutions-focused approach.</p>
+        </Section>
+
+        <Section title="Company Overview">
+          <ul style={listStyle}>
+            <li><strong>Established:</strong> 2023</li>
+            <li><strong>Production Capacity:</strong> Unlimited (scalable through our manufacturing network)</li>
+            <li><strong>Certifications:</strong> VAT/TAX Certificate, TIN, Trade License</li>
+            <li><strong>Core Team:</strong>
+              <ul style={{ marginTop: '.4rem', paddingLeft: '1.2rem' }}>
+                <li><strong>Mehrab Kabyo</strong> - Co-Founder & Technical Director (BSc in Textile Engineering, Merchandising Expert) (<a href="/CV_Mehrab_Kabyo_Merchandiser.pdf" target="_blank" rel="noopener noreferrer" style={{ fontWeight: 600, color: '#008F7D', textDecoration: 'underline' }}>View CV</a>)</li>
+                <li><strong>Yasin Arafat</strong> - Co-Founder & Business Development (<a href="https://yarafat.framer.website" target="_blank" rel="noopener noreferrer" style={{ fontWeight: 600, color: '#008F7D', textDecoration: 'underline' }}>View Portfolio</a>)</li>
+              </ul>
+            </li>
+          </ul>
         </Section>
 
         <Section title="Core Services">
           <ul style={listStyle}>
-            <li><strong>Fabric & Trim Sourcing:</strong> Mills + trims network, MOQs negotiation, lab dips & hand feel curation.</li>
-            <li><strong>Sampling Sprint:</strong> Rapid proto → fit → pre-production cycle with token/SKU tracking.</li>
-            <li><strong>Production Management:</strong> Line planning, capacity booking, inline QC, AQL final inspection.</li>
-            <li><strong>Cost Engineering:</strong> Yield optimization, fabric alternatives, process consolidation.</li>
-            <li><strong>Sustainability Advisory:</strong> Preferred materials roadmap & compliance documentation.</li>
-            <li><strong>Logistics Coordination:</strong> Packing standards, consolidation, freight & customs liaison.</li>
+            <li><strong>Fabric & Trim Sourcing:</strong> Extensive mill and trim network, MOQ negotiations, lab dips, and quality hand-feel curation.</li>
+            <li><strong>Rapid Sampling:</strong> Fast proto → fit → pre-production cycles with SKU/token tracking for complete transparency.</li>
+            <li><strong>Production Management:</strong> Comprehensive line planning, capacity booking, inline QC, and AQL final inspection.</li>
+            <li><strong>Cost Engineering:</strong> Yield optimization, fabric alternatives, and process consolidation to maximize value.</li>
+            <li><strong>Compliance & Documentation:</strong> Complete certification support and regulatory compliance assistance.</li>
+            <li><strong>Logistics Coordination:</strong> Professional packing standards, consolidation, freight, and customs liaison.</li>
           </ul>
         </Section>
 
-        <Section title="Why Brands Work With Us">
+        <Section title="Why Brands Choose Us">
           <ul style={listStyle}>
-            <li><span aria-hidden="true" style={{ marginRight: '.45rem' }}>⚡</span><strong>Speed:</strong> Sample lead times optimized (insert actual average days).</li>
-            <li><span aria-hidden="true" style={{ marginRight: '.45rem' }}>🔍</span><strong>Transparency:</strong> SKU/token system ties every quote & sample to a traceable reference.</li>
-            <li><span aria-hidden="true" style={{ marginRight: '.45rem' }}>🎛️</span><strong>Versatility:</strong> Knit / woven / denim / specialty small runs to scalable volumes.</li>
-            <li><span aria-hidden="true" style={{ marginRight: '.45rem' }}>🧵</span><strong>Quality Discipline:</strong> Layered QC gates (fabric, inline, final packing).</li>
-            <li><span aria-hidden="true" style={{ marginRight: '.45rem' }}>🤝</span><strong>Negotiated Value:</strong> Strategic vendor relationships keep landed cost competitive.</li>
+            <li><span aria-hidden="true" style={{ marginRight: '.45rem' }}>⚡</span><strong>Speed:</strong> Optimized sample lead times and rapid turnaround on bulk orders.</li>
+            <li><span aria-hidden="true" style={{ marginRight: '.45rem' }}>🔍</span><strong>Transparency:</strong> SKU/token system providing full traceability for every quote and sample.</li>
+            <li><span aria-hidden="true" style={{ marginRight: '.45rem' }}>🎛️</span><strong>Versatility:</strong> Knit, woven, denim, and specialty fabrics—from small runs to large-scale production.</li>
+            <li><span aria-hidden="true" style={{ marginRight: '.45rem' }}>🧵</span><strong>Quality Discipline:</strong> Multi-layer QC gates covering fabric inspection, inline monitoring, and final packing checks.</li>
+            <li><span aria-hidden="true" style={{ marginRight: '.45rem' }}>🤝</span><strong>Competitive Pricing:</strong> Strategic vendor relationships ensuring market-leading landed costs.</li>
+            <li><span aria-hidden="true" style={{ marginRight: '.45rem' }}>📜</span><strong>Fully Certified:</strong> VAT/TAX compliant with proper business licensing for professional operations.</li>
           </ul>
         </Section>
 
-        <Section title="Sustainability & Ethics">
-          <p>Outline your actual certifications (e.g. GOTS, BSCI, SEDEX, OEKO-TEX) and social compliance auditing cadence here. Describe waste reduction initiatives, water / chemical management, recycling programs, worker welfare training or fair wage policies.</p>
+        <Section title="Compliance & Quality">
+          <p>
+            90's Legacy operates as a fully licensed and certified business entity. We maintain VAT/TAX certification, Trade License, 
+            and TIN registration, ensuring complete regulatory compliance. Our quality assurance process includes multiple inspection 
+            points—from raw material receipt through final packing—to guarantee consistent standards across all deliveries.
+          </p>
         </Section>
 
         <Section title="Process Snapshot">
@@ -137,13 +155,12 @@ export function AboutContent({ audience = 'retail' }: { audience?: AboutAudience
           </div>
         </Section>
 
-        <Section title="Milestones (Customize)">
-          <ul style={listStyle}>
-            <li><strong>Year Founded:</strong> (add)</li>
-            <li><strong>Factories Integrated:</strong> (count) across (regions)</li>
-            <li><strong>Annual Capacity:</strong> (units / categories)</li>
-            <li><strong>Average Reorder Fill Rate:</strong> (percentage)</li>
-          </ul>
+        <Section title="Our Journey">
+          <p>
+            Since our founding in 2023, 90's Legacy has established itself as a trusted partner for brands seeking 
+            quality garment production with professional service. Our unlimited production capacity through strategic 
+            manufacturing partnerships allows us to scale with your business needs—from initial sampling to full production runs.
+          </p>
         </Section>
         {audience === 'retail' && (
           <Section title="Wholesale Access">
