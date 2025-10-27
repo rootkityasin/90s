@@ -49,7 +49,7 @@ export default function AdminAnimatedGrid({ products, onFullEdit }: { products: 
               </span>
             )}
           </div>
-          <h3 style={{ marginTop:'.5rem' }}>{p.title}</h3>
+          <h3 style={{ marginTop:'.5rem', fontFamily: "'Bebas Neue', sans-serif", fontSize: '1.15rem', letterSpacing: '0.5px' }}>{p.title}</h3>
           <p style={{ fontSize:'.65rem' }}>{p.subCategory ? `${p.category} • ${p.subCategory}` : p.category}</p>
           {p.productCode && <p style={{ fontSize:'.6rem', letterSpacing:'.12em', textTransform:'uppercase', opacity:.7 }}>Code: {p.productCode}</p>}
           <p style={{ fontSize:'.7rem' }}>Variants: {p.variants.length}</p>

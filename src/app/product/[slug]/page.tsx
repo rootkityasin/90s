@@ -6,13 +6,17 @@ import { ProductCard } from '../../components/ProductCard';
 
 // Note: This uses [slug] folder but treats it as productCode
 export async function generateMetadata({ params }: { params: { slug: string } }) {
-  const p = await getProductByCode(params.slug); // param is actually productCode
+  // Decode URL-encoded productCode (e.g., "TS%200004" -> "TS 0004")
+  const productCode = decodeURIComponent(params.slug);
+  const p = await getProductByCode(productCode); // param is actually productCode
   if (!p) return {};
   return { title: p.title, description: p.description };
 }
 
 export default async function ProductPage({ params, searchParams }: { params: { slug: string }; searchParams: { mode?: string } }) {
-  const p = await getProductByCode(params.slug); // param is actually productCode
+  // Decode URL-encoded productCode (e.g., "TS%200004" -> "TS 0004")
+  const productCode = decodeURIComponent(params.slug);
+  const p = await getProductByCode(productCode); // param is actually productCode
   if (!p || p.base !== 'retail') return notFound();
   const isClientView = searchParams.mode === 'client';
   const variant = p.variants[0];

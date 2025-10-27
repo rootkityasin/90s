@@ -6,16 +6,19 @@ import { ProductCard } from '../../../components/ProductCard';
 import { enforceClientAccess } from '../../../../lib/auth/enforceClientAccess';
 
 export async function generateMetadata({ params }: { params: { slug: string } }) {
-  // Note: params.slug is actually productCode now
-  const p = await getProductByCode(params.slug);
+  // Decode URL-encoded productCode (e.g., "TS%200004" -> "TS 0004")
+  const productCode = decodeURIComponent(params.slug);
+  const p = await getProductByCode(productCode);
   if (!p) return {};
   return { title: `${p.title} | Client`, description: p.description };
 }
 
 export default async function ClientProductPage({ params }: { params: { slug: string } }) {
+  // Decode URL-encoded productCode (e.g., "TS%200004" -> "TS 0004")
+  const productCode = decodeURIComponent(params.slug);
   enforceClientAccess(`/client/product/${params.slug}`);
   // Note: params.slug is actually productCode now
-  const p = await getProductByCode(params.slug);
+  const p = await getProductByCode(productCode);
   if (!p || p.base !== 'client') return notFound();
   const variant = p.variants[0];
   const all = await listProductsByBase('client');
