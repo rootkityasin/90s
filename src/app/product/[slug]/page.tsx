@@ -1,4 +1,4 @@
-import { getProductByCode, generateClientToken, listProducts } from '../../../lib/data/store';
+import { getProductByCode, generateClientToken, listProductsByBase } from '../../../lib/data/store';
 import { notFound } from 'next/navigation';
 import { JsonLd, productJsonLd } from '../../../lib/seo';
 import ProductClient from './ProductClient';
@@ -13,11 +13,11 @@ export async function generateMetadata({ params }: { params: { slug: string } })
 
 export default async function ProductPage({ params, searchParams }: { params: { slug: string }; searchParams: { mode?: string } }) {
   const p = await getProductByCode(params.slug); // param is actually productCode
-  if (!p) return notFound();
+  if (!p || p.base !== 'retail') return notFound();
   const isClientView = searchParams.mode === 'client';
   const variant = p.variants[0];
   const showPrice = !isClientView;
-  const all = await listProducts();
+  const all = await listProductsByBase('retail');
   const sameCategory = all.filter(sp => sp.category === p.category && sp.productCode !== p.productCode);
   const otherCategories = all.filter(sp => sp.category !== p.category && sp.productCode !== p.productCode);
   const suggestions = [...sameCategory.slice(0, 4), ...otherCategories].slice(0, 4);

@@ -1,4 +1,4 @@
-import { getProductByCode, generateClientToken, listProducts } from '../../../../lib/data/store';
+import { getProductByCode, generateClientToken, listProductsByBase } from '../../../../lib/data/store';
 import { notFound } from 'next/navigation';
 import { JsonLd, productJsonLd } from '../../../../lib/seo';
 import ProductClient from '../../../product/[slug]/ProductClient';
@@ -16,11 +16,11 @@ export default async function ClientProductPage({ params }: { params: { slug: st
   enforceClientAccess(`/client/product/${params.slug}`);
   // Note: params.slug is actually productCode now
   const p = await getProductByCode(params.slug);
-  if (!p) return notFound();
+  if (!p || p.base !== 'client') return notFound();
   const variant = p.variants[0];
-  const all = await listProducts();
-  const sameCategory = all.filter(sp => sp.category === p.category && sp.slug !== p.slug);
-  const otherCategories = all.filter(sp => sp.category !== p.category && sp.slug !== p.slug);
+  const all = await listProductsByBase('client');
+  const sameCategory = all.filter(sp => sp.category === p.category && sp.productCode !== p.productCode);
+  const otherCategories = all.filter(sp => sp.category !== p.category && sp.productCode !== p.productCode);
   const suggestions = [...sameCategory.slice(0, 4), ...otherCategories].slice(0, 4);
 
   return (
