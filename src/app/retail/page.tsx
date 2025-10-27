@@ -1,10 +1,10 @@
 import { ProductsPage } from '../components';
-import { listProducts } from '../../lib/data/store';
+import { listProductsByBase } from '../../lib/data/store';
 
 export const dynamic = 'force-dynamic';
 
 export default async function Retail() {
-  const products = await listProducts();
+  const products = await listProductsByBase('retail');
   return (
     <div data-no-footer>
       <ProductsPage
