@@ -54,6 +54,8 @@ export default function DeleteButton({ productId }: { productId: string }) {
         // Dispatch event for parent to show notification
         const event = new CustomEvent('productDeleted', { detail: { productId } });
         window.dispatchEvent(event);
+        // Navigate back to admin page after successful delete
+        router.push('/admin');
         router.refresh();
       } else {
         alert(`Error: ${result.error || 'Failed to delete product'}`);
