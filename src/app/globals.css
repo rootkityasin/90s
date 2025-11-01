@@ -3,6 +3,12 @@
 /* Custom font placeholders (provide actual woff2 files later) */
 @font-face { font-family: 'CaxtonLtBT'; src: local('Caxton Lt BT'), local('CaxtonLtBT'); font-weight:400; }
 @font-face { font-family: 'Minggola'; src: local('Minggola'); font-weight:400; }
+@font-face {
+  font-family: 'Rooster';
+  src: url('/assets/fonts/RoosterPersonalUse.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
 
 :root {
   --color-bg: #FBD4AB; /* base color */
@@ -24,6 +30,11 @@
 html, body { margin:0; padding:0; font-family: var(--font-body); background:#5b745f; color: var(--color-text); -webkit-font-smoothing:antialiased; }
 
 .product-title-font { font-family: var(--font-product-title) !important; font-weight:600; letter-spacing:.01em; }
+.rooster-font {
+  font-family: 'Rooster', cursive !important;
+  font-weight: 600;
+  letter-spacing: .01em;
+}
 
 .home-hero {
   background-image: url('/assets/textures/home-hero.jpg');
