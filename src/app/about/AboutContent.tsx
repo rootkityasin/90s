@@ -78,7 +78,7 @@ export function AboutContent({ audience = 'retail' }: { audience?: AboutAudience
             <li><strong>Certifications:</strong> VAT/TAX Certificate, TIN, Trade License</li>
             <li><strong>Core Team:</strong>
               <ul style={{ marginTop: '.4rem', paddingLeft: '1.2rem' }}>
-                <li><strong>Mehrab Kabyo</strong> - Co-Founder & Technical Director (BSc in Textile Engineering, Merchandising Expert) (<a href="/CV_Mehrab_Kabyo_Merchandiser.pdf" target="_blank" rel="noopener noreferrer" style={{ fontWeight: 600, color: '#008F7D', textDecoration: 'underline' }}>View CV</a>)</li>
+                <li><strong>Mehrab Kabbo</strong> - Co-Founder & Technical Director (BSc in Textile Engineering, Merchandising Expert) (<a href="/CV_Mehrab_Kabyo_Merchandiser.pdf" target="_blank" rel="noopener noreferrer" style={{ fontWeight: 600, color: '#008F7D', textDecoration: 'underline' }}>View CV</a>)</li>
                 <li><strong>Yasin Arafat</strong> - Co-Founder & Business Development (<a href="https://yarafat.framer.website" target="_blank" rel="noopener noreferrer" style={{ fontWeight: 600, color: '#008F7D', textDecoration: 'underline' }}>View Portfolio</a>)</li>
               </ul>
             </li>

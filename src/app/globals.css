@@ -222,6 +222,9 @@ body::before {
   --card-muted:#1f4e46;
   background: var(--color-surface);
   padding: .85rem .85rem .7rem;
+  /* expose padding as vars so edge-to-edge button can align */
+  --pad-x: .85rem;
+  --pad-b: .7rem;
   border-radius: var(--radius);
   position: relative;
   overflow: hidden;
@@ -269,18 +272,118 @@ button:disabled { opacity:.5; cursor:not-allowed; }
 /* Mobile product grid tightening: aim ~6 items visible (2 cols x ~3 rows) */
 @media (max-width: 640px) {
   .grid { grid-template-columns: repeat(2, 1fr); gap: .6rem; }
-  .card { padding: .55rem .55rem .5rem; border-radius: 10px; }
-  .card h3 { font-size: .95rem; margin: .25rem 0 .35rem; letter-spacing: 0.5px; }
+  .card { padding: .55rem .55rem .5rem; border-radius: 10px; --pad-x: .55rem; --pad-b: .5rem; }
+  .card h3 { font-size: .95rem; margin: .2rem 0 .25rem; letter-spacing: 0.5px; }
   .card p { font-size: .65rem; line-height: 1.25; }
   .badge { top: .4rem; right: .4rem; padding: .15rem .4rem; font-size: .55rem; }
-  /* ZoomImage container inside card (2nd div child due to badge being first div) */
-  .card > div:nth-of-type(2) { height: 150px !important; border-radius: 10px; }
+  /* Product card image height (mobile) */
+  .product-card .pc-image { height: 200px !important; border-radius: 12px; }
 }
 
 @media (max-width: 540px) {
   .product-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .card { padding: .6rem .6rem .55rem; }
-  .card > div:nth-of-type(2) { height: 180px !important; }
+  .card { padding: .6rem .6rem .55rem; --pad-x: .6rem; --pad-b: .55rem; }
+  /* Product card image height (smallest screens) */
+  .product-card .pc-image { height: 220px !important; }
+}
+
+/* Product card enhancements to match reference design */
+.product-card { position: relative; }
+.card.product-card { border-radius: 0; border: none; } /* rectangular, no border, for edge-to-edge bottom bar */
+.product-card .pc-image {
+  height: 280px;
+  border-radius: 14px;
+  border: 1px solid rgba(0,0,0,0.08);
+  background: var(--color-surface);
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,0.04);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: .35rem .2rem .25rem;
+}
+
+/* Ribbon at top-right */
+.card-ribbon {
+  /* tune with CSS vars to keep proportions consistent */
+  --ribbon-w: 28px; /* thickness */
+  --ribbon-h: 50px; /* height (slightly smaller as requested) */
+  position: absolute;
+  right: .6rem;
+  top: 0; /* align to card top edge */
+  width: var(--ribbon-w);
+  height: var(--ribbon-h);
+  background: #F25E5E; /* accent */
+  border-radius: 4px 4px 0 0;
+  z-index: 2;
+  display: flex;
+  align-items: center; /* center ribbon text horizontally */
+  justify-content: center; /* center ribbon text vertically (in writing-mode) */
+  padding-top: 2px; /* small visual offset so top doesn’t feel cramped */
+}
+.card-ribbon::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: -10px; /* pointer height */
+  /* pointer width tracks ribbon thickness */
+  border-left: calc(var(--ribbon-w) / 2) solid transparent;
+  border-right: calc(var(--ribbon-w) / 2) solid transparent;
+  border-top: 10px solid #F25E5E;
+}
+
+.ribbon-text {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  color: #fff;
+  font-family: 'Bebas Neue', 'CaxtonLtBT', sans-serif;
+  font-weight: 400; /* remove bold */
+  /* make text visually fill ribbon thickness */
+  font-size: calc(var(--ribbon-w) - 10px);
+  letter-spacing: .04em;
+  line-height: 1;
+  user-select: none;
+  overflow: hidden; /* clip long labels without hiding the arrow */
+}
+
+@media (max-width: 640px) {
+  /* keep the same proportional behavior on small screens */
+  .card-ribbon { --ribbon-w: 26px; --ribbon-h: 48px; }
+  .ribbon-text { font-size: calc(var(--ribbon-w) - 10px); }
+}
+
+/* Add to cart bar */
+.add-to-cart-bar {
+  margin-top: .7rem;
+  /* edge-to-edge across the card, flush with bottom */
+  width: calc(100% + (var(--pad-x) * 2));
+  margin-left: calc(var(--pad-x) * -1);
+  margin-right: calc(var(--pad-x) * -1);
+  margin-bottom: calc(var(--pad-b) * -1);
+  background: #F37C67;
+  color: #fff;
+  border: 0;
+  border-radius: 0; /* rectangular bottom bar */
+  padding: .8rem 1rem;
+  font-family: 'Bebas Neue', 'CaxtonLtBT', sans-serif;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  font-size: .85rem;
+  cursor: pointer;
+  text-align: center;
+  /* remove any top line that can look like a border */
+  box-shadow: none;
+  transition: filter .15s ease, transform .06s ease;
+}
+.add-to-cart-bar:hover { filter: brightness(0.96); }
+.add-to-cart-bar:active { transform: translateY(1px); }
+
+/* Card price typography */
+.card-price {
+  font-family: 'Bebas Neue', 'CaxtonLtBT', sans-serif;
+  letter-spacing: .01em;
+  line-height: 1;
 }
 
 /* Filter bar mobile ordering and custom select styling (mobile only) */
