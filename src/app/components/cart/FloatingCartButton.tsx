@@ -6,6 +6,8 @@ import { useCart } from './CartContext';
 import Lottie from 'lottie-react';
 import animationData from '../../../../public/assets/animation/Add To Cart Success black.json';
 
+const DRAG_ACTIVATION_THRESHOLD = 8;
+
 export function FloatingCartButton() {
   const pathname = usePathname();
   if (pathname?.startsWith('/client') || pathname?.startsWith('/admin')) return null;
@@ -15,6 +17,9 @@ export function FloatingCartButton() {
   const dragMovedRef = React.useRef(false);
   const activePointerIdRef = React.useRef<number | null>(null);
   const mouseDragActiveRef = React.useRef(false);
+  const dragStartRef = React.useRef<{ x: number; y: number } | null>(null);
+  const captureTargetRef = React.useRef<HTMLDivElement | null>(null);
+  const hasPointerCaptureRef = React.useRef(false);
   const [position, setPosition] = React.useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = React.useState(false);
 
@@ -55,13 +60,16 @@ export function FloatingCartButton() {
     return () => window.removeEventListener('resize', handleResize);
   }, [clampPosition]);
 
-  const beginDrag = React.useCallback((clientX: number, clientY: number) => {
+  const beginDrag = React.useCallback((clientX: number, clientY: number, target: HTMLDivElement | null) => {
     dragOffsetRef.current = {
       x: clientX - position.x,
       y: clientY - position.y
     };
+    dragStartRef.current = { x: clientX, y: clientY };
+    captureTargetRef.current = target;
     dragMovedRef.current = false;
-    setIsDragging(true);
+    hasPointerCaptureRef.current = false;
+    setIsDragging(false);
   }, [position.x, position.y]);
 
   const continueDrag = React.useCallback((clientX: number, clientY: number) => {
@@ -69,15 +77,42 @@ export function FloatingCartButton() {
       x: clientX - dragOffsetRef.current.x,
       y: clientY - dragOffsetRef.current.y
     });
-    if (Math.abs(next.x - position.x) > 1 || Math.abs(next.y - position.y) > 1) {
+    const start = dragStartRef.current;
+    const movedEnough = start
+      ? (Math.abs(clientX - start.x) > DRAG_ACTIVATION_THRESHOLD || Math.abs(clientY - start.y) > DRAG_ACTIVATION_THRESHOLD)
+      : false;
+
+    if (!isDragging && movedEnough) {
+      setIsDragging(true);
+    }
+
+    if ((isDragging || movedEnough) && !dragMovedRef.current) {
       dragMovedRef.current = true;
     }
-    setPosition(next);
-  }, [clampPosition, position.x, position.y]);
+
+    if ((isDragging || movedEnough) && !hasPointerCaptureRef.current && activePointerIdRef.current !== null && captureTargetRef.current) {
+      captureTargetRef.current.setPointerCapture?.(activePointerIdRef.current);
+      hasPointerCaptureRef.current = true;
+    }
+
+    if (isDragging || movedEnough) {
+      setPosition(next);
+    }
+  }, [clampPosition, isDragging]);
 
   const endDrag = React.useCallback(() => {
+    if (hasPointerCaptureRef.current && activePointerIdRef.current !== null && captureTargetRef.current) {
+      try {
+        captureTargetRef.current.releasePointerCapture?.(activePointerIdRef.current);
+      } catch {
+        // ignore if pointer already released
+      }
+    }
     setIsDragging(false);
     mouseDragActiveRef.current = false;
+    dragStartRef.current = null;
+    captureTargetRef.current = null;
+    hasPointerCaptureRef.current = false;
     activePointerIdRef.current = null;
   }, []);
 
@@ -85,21 +120,21 @@ export function FloatingCartButton() {
     if (event.pointerType === 'mouse' && event.button !== 0) return;
     activePointerIdRef.current = event.pointerId;
     mouseDragActiveRef.current = false;
-    beginDrag(event.clientX, event.clientY);
-    event.preventDefault();
-    event.currentTarget.setPointerCapture?.(event.pointerId);
+    beginDrag(event.clientX, event.clientY, event.currentTarget);
   }, [beginDrag]);
 
   const handlePointerMove = React.useCallback((event: React.PointerEvent<HTMLDivElement>) => {
-    if (!isDragging) return;
     if (activePointerIdRef.current !== null && event.pointerId !== activePointerIdRef.current) return;
-    event.preventDefault();
+    if (dragStartRef.current === null) return;
     continueDrag(event.clientX, event.clientY);
-  }, [continueDrag, isDragging]);
+  }, [continueDrag]);
 
   const handlePointerUp = React.useCallback((event: React.PointerEvent<HTMLDivElement>) => {
     if (activePointerIdRef.current !== null && event.pointerId !== activePointerIdRef.current) return;
-    event.currentTarget.releasePointerCapture?.(event.pointerId);
+    if (hasPointerCaptureRef.current) {
+      event.currentTarget.releasePointerCapture?.(event.pointerId);
+      hasPointerCaptureRef.current = false;
+    }
     endDrag();
   }, [endDrag]);
 
@@ -107,13 +142,11 @@ export function FloatingCartButton() {
     if (activePointerIdRef.current !== null) return;
     if (event.button !== 0) return;
     mouseDragActiveRef.current = true;
-    beginDrag(event.clientX, event.clientY);
-    event.preventDefault();
+    beginDrag(event.clientX, event.clientY, event.currentTarget);
   }, [beginDrag]);
 
   const handleMouseMove = React.useCallback((event: React.MouseEvent<HTMLDivElement>) => {
     if (!mouseDragActiveRef.current || activePointerIdRef.current !== null) return;
-    event.preventDefault();
     continueDrag(event.clientX, event.clientY);
   }, [continueDrag]);
 
