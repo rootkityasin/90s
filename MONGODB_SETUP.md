@@ -1,137 +1,71 @@
-# MongoDB Atlas Setup (512MB Free Forever)
+# MongoDB Atlas Setup (M0 Free Tier)
 
-## Step 1: Create MongoDB Atlas Account (3 minutes)
+MongoDB Atlas provides a managed replica set that keeps catalog data persistent across deployments. The project automatically falls back to `mongodb://localhost:27017/90s-store` if `MONGODB_URI` is missing, but Atlas is recommended.
 
-1. Go to https://www.mongodb.com/cloud/atlas/register
-2. Sign up with Google or GitHub (free)
-3. Click **"Build a Database"**
-4. Choose **"M0 FREE"** tier
-   - ✅ 512MB storage
-   - ✅ Shared RAM
-   - ✅ Free forever, no credit card required
-5. Choose **AWS** and closest region to you
-6. Name your cluster: `90s-store` (or any name)
-7. Click **"Create"**
+## 1. Create the Cluster
+1. Visit https://www.mongodb.com/cloud/atlas/register and sign in (Google/GitHub works).
+2. Choose **Build a Database → Shared → M0** (512 MB storage, shared RAM, no credit card).
+3. Select AWS and the closest region.
+4. Name the cluster `90s-store` (any name is fine) and create it.
 
-## Step 2: Create Database User
+## 2. Create a Database User
+1. From **Security Quickstart**, add a user (e.g. `admin`).
+2. Generate or define a strong password and store it securely.
 
-1. On the "Security Quickstart" page:
-   - Username: `admin` (or any username)
-   - Password: Click "Autogenerate" or create your own
-   - **⚠️ SAVE THIS PASSWORD!**
-2. Click **"Create User"**
+## 3. Allow Network Access
+- During setup, choose **Add My Current IP** or allow `0.0.0.0/0` for development.
+- You can tighten this later inside **Network Access**.
 
-## Step 3: Allow Network Access
+## 4. Copy the Connection String
+1. Click **Connect → Connect your application**.
+2. Pick the Node.js driver (v4+), copy the URI, and replace the password placeholder.
+3. Append the database name so Atlas creates it automatically:
 
-1. On "Network Access" page:
-   - Click **"Add IP Address"**
-   - Click **"Allow Access from Anywhere"** (for development)
-   - Or add your specific IP address
-2. Click **"Confirm"**
-
-## Step 4: Get Connection String
-
-1. Click **"Connect"** on your cluster
-2. Choose **"Connect your application"**
-3. Copy the connection string (looks like):
+   ```text
+   mongodb+srv://admin:<password>@cluster0.xxxxx.mongodb.net/90s-store?retryWrites=true&w=majority
    ```
-   mongodb+srv://admin:<password>@cluster0.xxxxx.mongodb.net/?retryWrites=true&w=majority
-   ```
-4. Replace `<password>` with your actual password
-5. Replace `/?retryWrites` with `/90s-store?retryWrites` to specify database name
 
-**Final connection string should look like:**
-```
-mongodb+srv://admin:yourpassword@cluster0.xxxxx.mongodb.net/90s-store?retryWrites=true&w=majority
+## 5. Update `.env.local`
+
+```bash
+MONGODB_URI="mongodb+srv://admin:YOUR_PASSWORD@cluster0.xxxxx.mongodb.net/90s-store?retryWrites=true&w=majority"
 ```
 
-## Step 5: Add to Environment Variables
+Restart any running dev server after changing environment variables.
 
-Create/update `.env.local` file in project root:
-
-```env
-MONGODB_URI="mongodb+srv://admin:yourpassword@cluster0.xxxxx.mongodb.net/90s-store?retryWrites=true&w=majority"
-```
-
-**⚠️ Important**: Add `.env.local` to `.gitignore` (already done)
-
-## Step 6: Initialize Database
-
-Run this command to create collections and seed data:
+## 6. Seed the Database
 
 ```powershell
 npx tsx src/lib/data/initDb.ts
 ```
 
-This will:
-- ✅ Create `products` collection
-- ✅ Create `sales` collection  
-- ✅ Seed initial products from manifest
-- ✅ Seed 14 days of sales data
-- ✅ Create indexes for performance
+The script ensures the following collections exist:
+- `products` seeded from the manifest with retail defaults
+- `sales` seeded with 14 days of demo analytics
+- Indexes on `slug`, `category`, `productCode`, and `base`
 
-## Step 7: Start Dev Server
+You can rerun the script safely; it skips seeding when data already exists.
+
+## 7. Run the App
 
 ```powershell
 npm run dev
 ```
 
-## Step 8: Deploy to Vercel
+Visit `http://localhost:3000/admin` to create or edit products, then refresh `/retail` and `/client/catalog` to confirm persistence.
 
-1. Go to Vercel Dashboard → Your Project → Settings → Environment Variables
-2. Add:
-   - Name: `MONGODB_URI`
-   - Value: Your full connection string
-3. Click **"Save"**
-4. Redeploy your app
-
-## What You Get (FREE Forever)
-
-- ✅ **512MB storage** (enough for 1000+ products with images)
-- ✅ **Persistent data** (survives deployments)
-- ✅ **Works on localhost AND Vercel**
-- ✅ **You already know MongoDB**
-- ✅ **No credit card required**
-- ✅ **Never expires**
-
-## Testing
-
-After setup, test in admin:
-1. Add new product
-2. Edit product
-3. Refresh page → **Data persists!** 🎉
-4. Deploy to Vercel → **Still there!** 🚀
+## 8. Configure Vercel
+1. Go to **Vercel → Project → Settings → Environment Variables**.
+2. Add `MONGODB_URI` with the same connection string for Production, Preview, and Development.
+3. Redeploy; the health check at `/api/health` should report `mongodb: true`.
 
 ## Troubleshooting
+- **Connection refused / timeout** – Confirm the IP address is allowed and the cluster is in the `Ready` state.
+- **Authentication failed** – Re-copy the password, ensure special characters are URL encoded, or regenerate the user.
+- **No data after seeding** – Check the script output; if errors occur, delete the empty collections in Atlas and rerun.
 
-**Error: MONGODB_URI not set**
-- Make sure `.env.local` exists with `MONGODB_URI`
-- Restart dev server: `npm run dev`
-
-**Error: Authentication failed**
-- Verify password in connection string is correct
-- Check database user was created properly
-
-**Error: Connection timeout**
-- Verify IP address is whitelisted (0.0.0.0/0 for anywhere)
-- Check MongoDB cluster is running
-
-**Need help?**
-Check: https://www.mongodb.com/docs/atlas/getting-started/
-
----
-
-## Why MongoDB Atlas?
-
-### Before (In-memory)
-- ❌ Data resets on Vercel deployments
-- ❌ No persistence
-- ❌ Lost all changes on refresh
-
-### After (MongoDB Atlas)
-- ✅ Data persists permanently
-- ✅ Works on localhost AND Vercel
-- ✅ 512MB free storage forever
-- ✅ You already know MongoDB
-- ✅ Production-ready
-- ✅ No learning curve for you!
+## Why Atlas?
+- Persistent storage that survives Vercel deploys
+- Shared free tier sufficient for thousands of SKUs
+- Automatic backups and monitoring dashboards
+- Native driver works with Edge-friendly Next.js server actions

@@ -1,7 +1,7 @@
 "use client";
 import React from 'react';
 import { motion } from 'framer-motion';
-import { FACEBOOK_PAGE_URL, INSTAGRAM_URL, WHATSAPP_PHONE } from '../../lib/config';
+import { FACEBOOK_PAGE_URL, INSTAGRAM_URL, WHATSAPP_PHONE, WHATSAPP_WA_LINK } from '../../lib/config';
 
 const container = {
   hidden: { opacity: 0 },
@@ -37,7 +37,7 @@ const socialLinks = [
   },
   {
     label: 'WhatsApp',
-    href: `https://wa.me/${WHATSAPP_PHONE}?text=Hi%20I%20want%20to%20discuss%20a%20contract`,
+    href: `${WHATSAPP_WA_LINK}?text=Hi%20I%20want%20to%20discuss%20a%20contract`,
     rotate: 6,
     icon: (
       <svg viewBox="0 0 24 24" width={18} height={18} aria-hidden="true">

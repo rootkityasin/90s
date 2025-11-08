@@ -24,6 +24,18 @@ export async function GET(request: NextRequest) {
     
     // Get all retail products
     const products = await listProductsByBase('retail');
+    const categoriesAll = Array.from(new Set(products.map(p => p.category).filter((c): c is string => Boolean(c)))).sort((a, b) => a.localeCompare(b));
+    const categoryTree = Object.fromEntries(categoriesAll.map(cat => [
+      cat,
+      Array.from(new Set(products
+        .filter(p => p.category === cat && p.subCategory)
+        .map(p => p.subCategory as string)
+      )).sort((a, b) => a.localeCompare(b))
+    ]));
+    const subCategoriesAll = Array.from(new Set(products
+      .map(p => p.subCategory)
+      .filter((s): s is string => Boolean(s))
+    )).sort((a, b) => a.localeCompare(b));
     
     // Optional filters
     const category = searchParams.get('category');
@@ -44,7 +56,14 @@ export async function GET(request: NextRequest) {
       );
     }
     
-    return NextResponse.json({ success: true, products: filtered, total: filtered.length }, { status: 200 });
+    return NextResponse.json({
+      success: true,
+      products: filtered,
+      total: filtered.length,
+      categories: categoriesAll,
+      subCategories: subCategoriesAll,
+      categoryTree
+    }, { status: 200 });
   } catch (error: any) {
     console.error('Retail products error:', error);
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });

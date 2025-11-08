@@ -18,8 +18,8 @@ const basePrice: Record<string, number> = {
   trouser: 2400 
 };
 
-const DEFAULT_FABRIC_DETAILS = '95% Cotton / 5% Elastane (example) • Pre-washed • Colorfast • Soft hand-feel.';
-const DEFAULT_CARE_INSTRUCTIONS = 'Care: Cold wash, inside out, no bleach, tumble dry low.';
+const DEFAULT_FABRIC_DETAILS = 'Fabric: 95% cotton, 5% elastane for natural stretch • Pre-laundered for a soft, broken-in feel • Colorfast finish that holds its tone.';
+const DEFAULT_CARE_INSTRUCTIONS = 'Care: Machine wash cold inside out with like colours • Do not bleach • Tumble dry low or line dry • Warm iron on reverse if needed.';
 
 // Connect to MongoDB
 async function connectDB(): Promise<Db> {

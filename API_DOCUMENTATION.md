@@ -1,301 +1,182 @@
-# API-Based CRUD Operations
+# API Reference
 
-## Overview
+This project exposes a small REST surface area for catalog management and read models, plus an SSE channel for real-time updates. Server Actions reuse the same database helpers, so the endpoints documented here are suitable for external tooling, automated tests, or integrating other services.
 
-The admin panel now uses RESTful API routes for all CRUD operations instead of direct server actions. This ensures better compatibility with Vercel's serverless architecture and provides a clean separation of concerns.
+Base URL during local development: `http://localhost:3000`
 
-## API Endpoints
+## Authentication
 
-### Admin API (`/api/admin/products`)
+The admin API currently relies on environment-level access (no tokens yet). Restrict usage to trusted environments and add middleware before opening it to the public internet.
 
-**Base URL:** `/api/admin/products`
+## Admin Products API (`/api/admin/products`)
 
-#### GET - List all products
-```bash
-GET /api/admin/products
-```
-**Response:**
-```json
-{
-  "success": true,
-  "products": [...],
-}
-```
+### GET `/api/admin/products`
+Returns the full product catalog (retail and client bases).
 
-#### POST - Create new product
-```bash
-POST /api/admin/products
-Content-Type: application/json
-```
-**Body:**
-```json
-{
-  "slug": "product-slug",
-  "title": "Product Title",
-  "description": "Product description",
-  "subCategory": "Optional subcategory",
-  "productCode": "PROD-01",
-  "fabricDetails": "Material details",
-  "careInstructions": "Care instructions",
-  "category": "cargos",
-  "heroImage": "/path/to/hero.jpg",
-  "images": ["/path/1.jpg", "/path/2.jpg"],
-  "variants": [
-    {
-      "id": "uuid",
-      "sku": "PROD-M",
-      "color": "Blue",
-      "size": "M",
-      "retailPriceBDT": 2000
-    }
-  ]
-}
-```
-**Response:**
-```json
-{
-  "success": true,
-  "product": {...}
-}
-```
-
-#### PUT - Update existing product
-```bash
-PUT /api/admin/products
-Content-Type: application/json
-```
-**Body:**
-```json
-{
-  "slug": "product-slug",  // Required - identifies the product
-  "title": "Updated Title",
-  // ... any fields to update
-}
-```
-**Response:**
-```json
-{
-  "success": true,
-  "product": {...}
-}
-```
-
-#### DELETE - Remove product
-```bash
-DELETE /api/admin/products?slug=product-slug
-```
-**Response:**
-```json
-{
-  "success": true,
-  "message": "Product deleted successfully"
-}
-```
-
----
-
-### Retail API (`/api/retail/products`)
-
-**Base URL:** `/api/retail/products`
-
-#### GET - List all products (with prices)
-```bash
-GET /api/retail/products
-
-# Optional filters:
-GET /api/retail/products?category=cargos
-GET /api/retail/products?search=keyword
-GET /api/retail/products?slug=product-slug
-```
-
-**Response:**
-```json
-{
-  "success": true,
-  "products": [...],
-  "total": 25
-}
-```
-
----
-
-### Client API (`/api/client/products`)
-
-**Base URL:** `/api/client/products`
-
-#### GET - List all products (with tokens instead of prices)
-```bash
-GET /api/client/products
-
-# Optional filters:
-GET /api/client/products?category=cargos
-GET /api/client/products?search=keyword
-GET /api/client/products?slug=product-slug
-GET /api/client/products?sku=PROD-M
-```
-
-**Response:**
+**Response**
 ```json
 {
   "success": true,
   "products": [
     {
-      "...": "...",
+      "productCode": "CRG-ASH-01",
+      "base": "retail",
+      "category": "cargos",
       "variants": [
         {
-          "sku": "PROD-M",
-          "token": "PROD-M",  // Token for client ordering
-          "color": "Blue",
-          "size": "M"
+          "sku": "CRG-ASH-01-M",
+          "retailPriceBDT": 2200
         }
       ]
     }
-  ],
-  "total": 25
+  ]
 }
 ```
 
----
+### POST `/api/admin/products`
+Creates a new product and broadcasts the update to all SSE subscribers.
 
-## Server Actions
+**Required fields**: `title`, `category`, `productCode`, `base`, `variants[]`
 
-The server actions in `/src/app/admin/actions.ts` now act as thin wrappers around the API:
-
-- `createProduct(formData)` → POST `/api/admin/products`
-- `editProduct(slug, formData)` → PUT `/api/admin/products`
-- `fullEditProduct(formData)` → PUT `/api/admin/products`
-- `deleteProduct(slug)` → DELETE `/api/admin/products`
-
-## Benefits
-
-1. **Vercel Compatible:** Works with serverless architecture
-2. **Consistent Data:** All requests go through the same API layer
-3. **RESTful:** Standard HTTP methods (GET, POST, PUT, DELETE)
-4. **Real-time Updates:** Broadcasts changes via SSE
-5. **Easy to Test:** Can test API endpoints directly
-6. **Separation of Concerns:** Clear boundary between UI and data layer
-
-## Product Identification
-
-Products are identified by **slug** instead of random UUID because:
-- ✅ Slugs are consistent across serverless instances
-- ✅ Slugs are human-readable and SEO-friendly
-- ✅ Slugs are generated from product manifest (deterministic)
-- ❌ Random UUIDs differ in each serverless instance
-
-## Search Functionality
-
-All API endpoints support searching by:
-- Product title
-- Description
-- **Product code** (NEW!)
-
-Example:
+**Sample request**
 ```bash
-GET /api/retail/products?search=TRS-01
-# Returns products matching "TRS-01" in title, description, or product code
+curl -X POST http://localhost:3000/api/admin/products \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "Stone Wash Cargo",
+    "category": "cargos",
+    "productCode": "CRG-STONE-01",
+    "base": "retail",
+    "images": ["https://res.cloudinary.com/.../cargos/stone-01.jpg"],
+    "variants": [
+      {
+        "id": "b1c5d6",
+        "sku": "CRG-STONE-01-M",
+        "color": "stone",
+        "size": "M",
+        "retailPriceBDT": 2200
+      }
+    ]
+  }'
 ```
+
+### PUT `/api/admin/products`
+Updates a product identified by `productCode`. You may send partial fields; timestamps update automatically.
+
+**Sample request**
+```bash
+curl -X PUT http://localhost:3000/api/admin/products \
+  -H "Content-Type: application/json" \
+  -d '{
+    "productCode": "CRG-STONE-01",
+    "title": "Stone Wash Cargo Pants",
+    "variants": [
+      {
+        "id": "b1c5d6",
+        "sku": "CRG-STONE-01-M",
+        "color": "stone",
+        "size": "M",
+        "retailPriceBDT": 2350
+      }
+    ]
+  }'
+```
+
+### DELETE `/api/admin/products?productCode=CRG-STONE-01`
+Deletes a product and emits a `productDelete` SSE event.
+
+**Sample request**
+```bash
+curl -X DELETE "http://localhost:3000/api/admin/products?productCode=CRG-STONE-01"
+```
+
+## Retail Catalog API (`/api/retail/products`)
+
+Returns only the retail catalog, including prices.
+
+### Query Parameters
+- `productCode` – fetch a specific product (retail base only)
+- `category` – filter by main category (`cargos`, `tshirt`, etc.)
+- `search` – substring match on title, description, or product code
+
+**Sample request**
+```bash
+curl "http://localhost:3000/api/retail/products?category=cargos&search=stone"
+```
+
+**Response fields**
+- `products` – array of products matching the filters
+- `categories` – set of available categories for the retail base
+- `subCategories` – distinct subcategories
+- `categoryTree` – categories mapped to subcategories
+- `total` – number of products returned after filtering
+
+## Client Catalog API (`/api/client/products`)
+
+Mirrors the retail endpoint but hides pricing and augments each variant with a token derived from the SKU. Requires users to pass the client gate inside the app to view.
+
+### Query Parameters
+- `productCode` – single client product (rejects retail entries)
+- `sku` – fetch a product by variant SKU and include token in response
+- `category`, `search` – same as retail API
+
+**Response fields**
+- `products` – catalog with `variants[].token`
+- `variant` – present only when querying by `sku`
+- `categories`, `subCategories`, `categoryTree`, `total`
+
+## Real-Time Stream (`/api/realtime-products`)
+
+Server-Sent Events (SSE) channel used by the admin dashboard and storefronts.
+
+| Event | Payload |
+| --- | --- |
+| `snapshot` | Entire product array on initial connection |
+| `productUpdate` | Single product document after create/update |
+| `productDelete` | `{ "id": "PRODUCT_CODE" }` for deletions |
+| `ping` | Timestamp keepalive every 25 seconds |
+
+Example listener (Node):
+```javascript
+const evtSource = new EventSource('http://localhost:3000/api/realtime-products');
+evtSource.addEventListener('productUpdate', (event) => {
+  const product = JSON.parse(event.data);
+  console.log('Product updated', product.productCode);
+});
+```
+
+## Auxiliary Endpoints
+
+- `GET /api/health` – Report MongoDB and Cloudinary readiness plus environment metadata.
+- `GET /api/test-cloudinary` – Verify Cloudinary credentials without triggering an upload.
+- `POST /api/upload-image` – Accepts multipart form data (`file`) and returns Cloudinary upload metadata.
+- `GET /api/client-auth` – Used by the client gate to verify cookie state.
+- `POST /api/client-auth` – Accepts `{ "password": "..." }`, validates against `CLIENT_ACCESS_PASSWORD`, and sets a secure cookie.
 
 ## Error Handling
 
-All API endpoints return consistent error format:
+All routes return a consistent envelope:
 ```json
-{
-  "success": false,
-  "error": "Error message here"
-}
+{ "success": false, "error": "message" }
 ```
 
-HTTP Status Codes:
-- `200` - Success
-- `201` - Created
-- `400` - Bad Request (missing fields)
-- `404` - Not Found
-- `500` - Server Error
+HTTP status codes:
+- `200` – Request succeeded
+- `201` – Resource created
+- `400` – Validation failure or missing parameter
+- `404` – Resource not found or base mismatch
+- `429` – Reserved for rate-limited operations (used in payment blueprint)
+- `500` – Unexpected runtime error (see logs for stack trace)
 
-## Environment Variables
+## Testing Checklist
 
-```env
-# Optional: Set custom API base URL
-NEXT_PUBLIC_API_URL=https://your-domain.vercel.app
-```
+1. `curl http://localhost:3000/api/admin/products` – verify the admin feed.
+2. `curl "http://localhost:3000/api/retail/products?category=cargos"` – confirm category filters.
+3. `curl -X POST /api/admin/products` – create a sample product, then watch `/api/realtime-products` for a `productUpdate` event.
+4. `curl -X DELETE /api/admin/products?productCode=...` – ensure deletions propagate with `productDelete`.
+5. `curl http://localhost:3000/api/health` – confirm `mongodb` and `cloudinary` report `true` before deploying.
 
-If not set, defaults to `http://localhost:3000` in development.
-
-## Real-time Updates
-
-The system uses Server-Sent Events (SSE) for real-time product updates:
-
-1. Client connects to `/api/realtime-products`
-2. Server sends initial snapshot
-3. On product update/delete, server broadcasts to all connected clients
-4. Clients update their UI automatically
-
-**Events:**
-- `snapshot` - Initial product list
-- `productUpdate` - Product created/updated
-- `productDelete` - Product deleted
-- `ping` - Keepalive (every 25s)
-
-## Testing
-
-Test the API directly:
-
-```bash
-# List products
-curl http://localhost:3000/api/admin/products
-
-# Create product
-curl -X POST http://localhost:3000/api/admin/products \
-  -H "Content-Type: application/json" \
-  -d '{"title":"Test Product","category":"tshirt","variants":[...]}'
-
-# Update product
-curl -X PUT http://localhost:3000/api/admin/products \
-  -H "Content-Type: application/json" \
-  -d '{"slug":"test-product","title":"Updated Title"}'
-
-# Delete product
-curl -X DELETE "http://localhost:3000/api/admin/products?slug=test-product"
-```
-
-## Migration Notes
-
-### Before (Direct Store Access)
-```typescript
-import { updateProduct } from '../../lib/data/store';
-const updated = updateProduct(productId, patch);
-```
-
-### After (API-Based)
-```typescript
-const response = await fetch(`${API_BASE}/api/admin/products`, {
-  method: 'PUT',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({ slug: productSlug, ...patch }),
-});
-const data = await response.json();
-```
-
-## Troubleshooting
-
-**Issue:** "Product not found" error  
-**Solution:** Make sure you're passing the `slug` field, not random `id`
-
-**Issue:** Changes don't persist on Vercel  
-**Solution:** Ensure `NEXT_PUBLIC_API_URL` is set to your Vercel domain
-
-**Issue:** API returns 500 error  
-**Solution:** Check Vercel function logs for detailed error messages
-
-**Issue:** Real-time updates not working  
-**Solution:** Check SSE connection at `/api/realtime-products`
-
-## Next Steps
-
-1. ✅ All CRUD operations use API routes
-2. ✅ Product code search enabled
-3. ✅ Slug-based identification
-4. ⏳ Deploy to Vercel and test
-5. ⏳ Add authentication/authorization to admin API
-6. ⏳ Migrate to database (PostgreSQL/Prisma)
+## Future Hardening
+- Add authentication middleware (NextAuth, JWT, or HMAC signatures) before exposing admin endpoints publicly.
+- Introduce role-aware rate limiting via Redis or Upstash to defend against brute force attempts.
+- Expand error telemetry with a centralized logger (e.g., Sentry) so 500 responses surface actionable details.

@@ -13,28 +13,65 @@ export function CategoryDropdown({ target }: CategoryDropdownProps = {}) {
   const pathname = usePathname();
   // Derive categories from product data to keep in sync with product list
   const [cats, setCats] = React.useState<string[]>([]);
-  
-  React.useEffect(() => {
-    // Fetch categories from API
-    async function fetchCategories() {
-      try {
-        const res = await fetch('/api/retail/products');
-        const data = await res.json();
-        if (data.success && data.products) {
-          const categories = Array.from(new Set(data.products.map((p: any) => p.category))).sort();
-          setCats(categories as string[]);
-        }
-      } catch (error) {
-        console.error('Failed to fetch categories:', error);
-      }
-    }
-    fetchCategories();
-  }, []);
-
+  const [subMap, setSubMap] = React.useState<Record<string, string[]>>({});
   const resolvedTarget = React.useMemo(() => {
     if (target) return target;
     return pathname.startsWith('/client') ? 'client' : 'retail';
   }, [target, pathname]);
+
+  React.useEffect(() => {
+    let cancelled = false;
+    async function fetchCategories() {
+      try {
+        const endpoint = resolvedTarget === 'client' ? '/api/client/products' : '/api/retail/products';
+        const res = await fetch(endpoint, { cache: 'no-store' });
+        const data = await res.json();
+        if (!data?.success) return;
+        const list: any[] = Array.isArray(data.products) ? data.products : [];
+
+        const deriveTree = (products: any[]): Record<string, string[]> => {
+          const tree: Record<string, string[]> = {};
+          products.forEach((p) => {
+            if (!p?.category) return;
+            if (!tree[p.category]) tree[p.category] = [];
+            if (p.subCategory && !tree[p.category].includes(p.subCategory)) {
+              tree[p.category].push(p.subCategory);
+            }
+          });
+          Object.keys(tree).forEach((key) => {
+            tree[key] = tree[key].slice().sort((a, b) => a.localeCompare(b));
+          });
+          return tree;
+        };
+
+        const categories: string[] = Array.isArray(data.categories) && data.categories.length
+          ? (data.categories as string[]).slice().sort((a, b) => a.localeCompare(b))
+          : Array.from(new Set(list.map((p: any) => p?.category).filter(Boolean))).sort((a, b) => a.localeCompare(b));
+
+        const treeRaw: Record<string, string[]> = data.categoryTree && typeof data.categoryTree === 'object'
+          ? Object.fromEntries(Object.entries(data.categoryTree).map(([key, value]) => [key, Array.isArray(value) ? (value as string[]).slice().sort((a, b) => a.localeCompare(b)) : []]))
+          : deriveTree(list);
+
+        const tree: Record<string, string[]> = { ...treeRaw };
+        categories.forEach((cat) => {
+          if (!tree[cat]) tree[cat] = [];
+        });
+
+        if (!cancelled) {
+          setCats(categories);
+          setSubMap(tree);
+        }
+      } catch (error) {
+        if (!cancelled) {
+          console.error('Failed to fetch categories:', error);
+        }
+      }
+    }
+    fetchCategories();
+    return () => {
+      cancelled = true;
+    };
+  }, [resolvedTarget]);
 
   const baseHref = resolvedTarget === 'client' ? '/client/catalog' : '/retail';
 
@@ -110,6 +147,21 @@ export function CategoryDropdown({ target }: CategoryDropdownProps = {}) {
                 >
                   {labelize(key)}
                 </Link>
+                {subMap[key]?.length ? (
+                  <ul className="category-sublist">
+                    {subMap[key].map((sub) => (
+                      <li key={sub}>
+                        <Link
+                          href={`${baseHref}?category=${encodeURIComponent(key)}&subCategory=${encodeURIComponent(sub)}`}
+                          onClick={closeDropdown}
+                          className="category-sublink"
+                        >
+                          {sub}
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                ) : null}
               </li>
             ))}
           </ul>

@@ -1,7 +1,7 @@
 "use client";
 
 import React from 'react';
-import { WHATSAPP_PHONE } from '../../lib/config';
+import { WHATSAPP_PHONE, WHATSAPP_WA_LINK } from '../../lib/config';
 
 const processSteps = [
   {
@@ -173,7 +173,7 @@ export function AboutContent({ audience = 'retail' }: { audience?: AboutAudience
 
         <Section title="Get In Touch">
           <p>Tap WhatsApp to start a cost discussion or request a sampling slot.</p>
-          <a href={`https://wa.me/${WHATSAPP_PHONE}?text=Hi%20I%20want%20to%20discuss%20sourcing`} className="pill" style={{ background: '#008F7D', fontWeight: 600 }}>Chat on WhatsApp</a>
+          <a href={`${WHATSAPP_WA_LINK}?text=Hi%20I%20want%20to%20discuss%20sourcing`} className="pill" style={{ background: '#008F7D', fontWeight: 600 }}>Chat on WhatsApp</a>
         </Section>
       </section>
     </div>

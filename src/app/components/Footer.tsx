@@ -2,7 +2,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { WHATSAPP_PHONE, FACEBOOK_PAGE_URL, INSTAGRAM_URL } from '../../lib/config';
+import { WHATSAPP_PHONE, WHATSAPP_WA_LINK, FACEBOOK_PAGE_URL, INSTAGRAM_URL } from '../../lib/config';
 // Reuse same SVG icons as hero for consistency
 const icons = {
   whatsapp: (
@@ -19,26 +19,63 @@ const icons = {
 export default function Footer({ role, clientAccess }: { role?: string; clientAccess?: boolean }) {
   const year = new Date().getFullYear();
   const [categories, setCategories] = React.useState<string[]>([]);
-  
-  React.useEffect(() => {
-    // Fetch categories from API
-    async function fetchCategories() {
-      try {
-        const res = await fetch('/api/retail/products');
-        const data = await res.json();
-        if (data.success && data.products) {
-          const cats = Array.from(new Set(data.products.map((p: any) => p.category))).sort();
-          setCategories(cats as string[]);
-        }
-      } catch (error) {
-        console.error('Failed to fetch categories:', error);
-      }
-    }
-    fetchCategories();
-  }, []);
+  const [categoryTree, setCategoryTree] = React.useState<Record<string, string[]>>({});
   
   const pathname = usePathname();
   const inClientMode = pathname.startsWith('/client') || role === 'client' || clientAccess;
+  const targetBase = inClientMode ? 'client' : 'retail';
+
+  React.useEffect(() => {
+    let cancelled = false;
+    async function fetchCategories() {
+      try {
+        const endpoint = targetBase === 'client' ? '/api/client/products' : '/api/retail/products';
+        const res = await fetch(endpoint, { cache: 'no-store' });
+        const data = await res.json();
+        if (!data?.success) return;
+        const products: any[] = Array.isArray(data.products) ? data.products : [];
+
+        const categoriesList: string[] = Array.isArray(data.categories) && data.categories.length
+          ? (data.categories as string[]).slice().sort((a, b) => a.localeCompare(b))
+          : Array.from(new Set(products.map((p: any) => p?.category).filter(Boolean))).sort((a, b) => a.localeCompare(b));
+
+        const treeRaw: Record<string, string[]> = data.categoryTree && typeof data.categoryTree === 'object'
+          ? Object.fromEntries(Object.entries(data.categoryTree).map(([key, value]) => [key, Array.isArray(value) ? (value as string[]).slice().sort((a, b) => a.localeCompare(b)) : []]))
+          : (() => {
+              const map: Record<string, string[]> = {};
+              products.forEach((p) => {
+                if (!p?.category) return;
+                if (!map[p.category]) map[p.category] = [];
+                if (p.subCategory && !map[p.category].includes(p.subCategory)) {
+                  map[p.category].push(p.subCategory);
+                }
+              });
+              Object.keys(map).forEach((key) => {
+                map[key] = map[key].slice().sort((a, b) => a.localeCompare(b));
+              });
+              return map;
+            })();
+
+        const tree: Record<string, string[]> = { ...treeRaw };
+        categoriesList.forEach((cat) => {
+          if (!tree[cat]) tree[cat] = [];
+        });
+
+        if (!cancelled) {
+          setCategories(categoriesList);
+          setCategoryTree(tree);
+        }
+      } catch (error) {
+        if (!cancelled) {
+          console.error('Failed to fetch categories:', error);
+        }
+      }
+    }
+    fetchCategories();
+    return () => {
+      cancelled = true;
+    };
+  }, [targetBase]);
   const shopHref = inClientMode ? '/client/catalog' : '/retail';
   const searchHref = inClientMode ? '/client/search' : '/search';
   const categoryBase = inClientMode ? '/client/catalog' : '/retail';
@@ -52,7 +89,7 @@ export default function Footer({ role, clientAccess }: { role?: string; clientAc
           <h3 className="footer-logo">90&apos;s Legacy</h3>
           <p className="footer-tag">Curating vintage-inspired 90s pieces.</p>
           <div className="footer-social" style={{ gap: '.55rem' }}>
-            <a href={`https://wa.me/${WHATSAPP_PHONE}?text=Hi%20I%20want%20to%20discuss%20sourcing`} aria-label="WhatsApp" target="_blank" rel="noreferrer" className="social-icon" title="WhatsApp">{icons.whatsapp}</a>
+            <a href={`${WHATSAPP_WA_LINK}?text=Hi%20I%20want%20to%20discuss%20sourcing`} aria-label="WhatsApp" target="_blank" rel="noreferrer" className="social-icon" title="WhatsApp">{icons.whatsapp}</a>
             <a href={FACEBOOK_PAGE_URL} aria-label="Facebook" target="_blank" rel="noreferrer" className="social-icon" title="Facebook">{icons.facebook}</a>
             <a href={INSTAGRAM_URL} aria-label="Instagram" target="_blank" rel="noreferrer" className="social-icon" title="Instagram">{icons.instagram}</a>
           </div>
@@ -72,7 +109,18 @@ export default function Footer({ role, clientAccess }: { role?: string; clientAc
           <h4 className="footer-head">Categories</h4>
           <ul>
             {categories.slice(0,8).map(c=> (
-              <li key={c}><Link href={`${categoryBase}?category=${encodeURIComponent(c)}`}>{c}</Link></li>
+              <li key={c}>
+                <Link href={`${categoryBase}?category=${encodeURIComponent(c)}`}>{c}</Link>
+                {categoryTree[c]?.length ? (
+                  <ul className="footer-sublist">
+                    {categoryTree[c].slice(0,3).map(sub => (
+                      <li key={sub}>
+                        <Link href={`${categoryBase}?category=${encodeURIComponent(c)}&subCategory=${encodeURIComponent(sub)}`}>{sub}</Link>
+                      </li>
+                    ))}
+                  </ul>
+                ) : null}
+              </li>
             ))}
           </ul>
         </div>
@@ -88,7 +136,7 @@ export default function Footer({ role, clientAccess }: { role?: string; clientAc
         <div className="footer-block">
           <h4 className="footer-head">Contact</h4>
           <ul>
-            <li><a href={`https://wa.me/${WHATSAPP_PHONE}?text=Hi%20I%20want%20to%20discuss%20sourcing`} target="_blank" rel="noreferrer">WhatsApp: {WHATSAPP_PHONE}</a></li>
+            <li><a href={`${WHATSAPP_WA_LINK}?text=Hi%20I%20want%20to%20discuss%20sourcing`} target="_blank" rel="noreferrer">WhatsApp: {WHATSAPP_PHONE}</a></li>
             <li><a href={FACEBOOK_PAGE_URL} target="_blank" rel="noreferrer">Facebook Page</a></li>
             <li><a href={INSTAGRAM_URL} target="_blank" rel="noreferrer">Instagram</a></li>
           </ul>

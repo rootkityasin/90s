@@ -48,10 +48,40 @@ export function ProductsPage({ title, description, mode, productsInitial = [] }:
   }, [mode]);
   const showPrice = mode === 'retail';
   // Retail enhancement: local search, category filter, sort
-  const categories = React.useMemo(() => Array.from(new Set((rawProducts || []).map(p => p.category))).sort(), [rawProducts]);
+  const categoryEntries = React.useMemo(() => {
+    const map = new Map<string, Set<string>>();
+    (rawProducts || []).forEach((p) => {
+      const category = p.category || 'Uncategorized';
+      if (!map.has(category)) map.set(category, new Set());
+      if (p.subCategory) {
+        map.get(category)!.add(p.subCategory);
+      }
+    });
+    return Array.from(map.entries())
+      .map(([cat, subs]) => [cat, Array.from(subs).sort((a, b) => a.localeCompare(b))] as [string, string[]])
+      .sort((a, b) => a[0].localeCompare(b[0]));
+  }, [rawProducts]);
+  const categories = React.useMemo(() => categoryEntries.map(([cat]) => cat), [categoryEntries]);
+  const categoryTree = React.useMemo(() => {
+    const tree: Record<string, string[]> = {};
+    categoryEntries.forEach(([cat, subs]) => {
+      tree[cat] = subs;
+    });
+    return tree;
+  }, [categoryEntries]);
+  const allSubCategories = React.useMemo(() => {
+    const set = new Set<string>();
+    categoryEntries.forEach(([, subs]) => subs.forEach((sub) => set.add(sub)));
+    return Array.from(set).sort((a, b) => a.localeCompare(b));
+  }, [categoryEntries]);
   const [q, setQ] = React.useState('');
   const [cat, setCat] = React.useState<string>('all');
+  const [subCat, setSubCat] = React.useState<string>('all');
   const [sort, setSort] = React.useState<'recent' | 'price-asc' | 'price-desc'>('recent');
+  const subCategoryOptions = React.useMemo(() => {
+    if (cat === 'all') return allSubCategories;
+    return categoryTree[cat] || [];
+  }, [cat, categoryTree, allSubCategories]);
   const PAGE_SIZE = 15;
   const [visible, setVisible] = React.useState(PAGE_SIZE);
   const sentinelRef = React.useRef<HTMLDivElement | null>(null);
@@ -63,18 +93,41 @@ export function ProductsPage({ title, description, mode, productsInitial = [] }:
   React.useEffect(() => {
     if (!searchParams) return;
     const urlCat = searchParams.get('category');
-    const normalized = urlCat && categories.includes(urlCat) ? urlCat : 'all';
-    setCat(prev => (prev === normalized ? prev : normalized));
+    const urlSub = searchParams.get('subCategory');
+
+    const normalizedCat = urlCat && categories.includes(urlCat) ? urlCat : 'all';
+    setCat((prev) => (prev === normalizedCat ? prev : normalizedCat));
+
+    if (urlSub) {
+      const isValidSub = normalizedCat === 'all'
+        ? allSubCategories.includes(urlSub)
+        : (categoryTree[normalizedCat]?.includes(urlSub) ?? false);
+      setSubCat(isValidSub ? urlSub : 'all');
+    } else {
+      setSubCat('all');
+    }
     // We intentionally do not sync q/sort from URL right now
-  }, [searchParams, categories]);
+  }, [searchParams, categories, categoryTree, allSubCategories]);
 
   // Reset visible items when filters, search, sort, or underlying data change
   React.useEffect(() => {
     setVisible(PAGE_SIZE);
-  }, [q, cat, sort, (rawProducts || []).length]);
+  }, [q, cat, subCat, sort, (rawProducts || []).length]);
+
+  React.useEffect(() => {
+    setSubCat((prev) => {
+      if (prev === 'all') return prev;
+      if (cat === 'all') {
+        return allSubCategories.includes(prev) ? prev : 'all';
+      }
+      const options = categoryTree[cat] || [];
+      return options.includes(prev) ? prev : 'all';
+    });
+  }, [cat, categoryTree, allSubCategories]);
 
   const filtered = (rawProducts || []).filter(p => {
     if (cat !== 'all' && p.category !== cat) return false;
+    if (subCat !== 'all' && p.subCategory !== subCat) return false;
     if (q) {
       const searchLower = q.toLowerCase();
       const matchesTitle = p.title.toLowerCase().includes(searchLower);
@@ -154,6 +207,28 @@ export function ProductsPage({ title, description, mode, productsInitial = [] }:
             <option value='all'>All Categories</option>
             {categories.map(c => <option key={c} value={c}>{c}</option>)}
           </select>
+
+          {subCategoryOptions.length > 0 && (
+            <>
+              <div className="mobile-only" style={{ width:'100%' }}>
+                <CustomSelect
+                  value={subCat}
+                  onChange={(value) => setSubCat(value)}
+                  options={[
+                    { value: 'all', label: 'All Subcategories' },
+                    ...subCategoryOptions.map(sc => ({ value: sc, label: sc }))
+                  ]}
+                  placeholder="Select subcategory"
+                  className="filter-subcat"
+                  aria-label="Filter subcategory"
+                />
+              </div>
+              <select value={subCat} onChange={e=>setSubCat(e.target.value)} style={controlStyle} aria-label='Filter subcategory' className="filter-select filter-subcat desktop-only">
+                <option value='all'>All Subcategories</option>
+                {subCategoryOptions.map(sc => <option key={sc} value={sc}>{sc}</option>)}
+              </select>
+            </>
+          )}
           
           {/* Sort filter - render both, toggle via CSS */}
           <div className="mobile-only" style={{ width:'100%' }}>

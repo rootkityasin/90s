@@ -1,93 +1,52 @@
-# PlanetScale Database Setup (5GB Free)
+# PlanetScale Setup (Optional)
 
-## Step 1: Create PlanetScale Account
+MongoDB Atlas is the production datastore for this project. Use PlanetScale only if you plan to migrate to a relational model (MySQL) with Prisma or a custom data layer. This guide captures the high-level steps so the option remains documented.
 
-1. Go to https://planetscale.com
-2. Sign up with GitHub (free)
-3. Click **"Create a new database"**
-4. Name: `90s-store` (or any name)
-5. Region: Choose closest to you
-6. Click **"Create database"**
+## When to Choose PlanetScale
+- You need relational joins, referential integrity, or complex reporting.
+- You want branch-based schema workflows and deploy requests.
+- Your platform engineering stack standardizes on MySQL.
 
-## Step 2: Get Connection String
+## 1. Create the Database
+1. Sign up at https://planetscale.com with GitHub (free tier includes 5 GB storage).
+2. Click **Create database**, pick a name (e.g. `90s-store`), choose the nearest region, and confirm.
 
-1. In your PlanetScale dashboard, click your database
-2. Click **"Connect"**
-3. Select **"@planetscale/database"** from dropdown
-4. Copy the connection string (looks like: `mysql://user:pass@host/database?ssl=...`)
+## 2. Generate Credentials
+1. Open the database → **Connect**.
+2. Choose the **General → mysql** connection format for use with Prisma or the Node driver.
+3. Copy the `mysql://` connection string; it contains a temporary password. Generate a new password if the first one expires.
 
-## Step 3: Add to Environment Variables
-
-Create/update `.env.local` file:
+## 3. Configure Environment Variables
 
 ```bash
-DATABASE_URL="mysql://your-connection-string-here"
+DATABASE_URL="mysql://USERNAME:PASSWORD@HOST/DB_NAME?sslaccept=strict"
 ```
 
-**Important**: Add `.env.local` to `.gitignore` (already done)
+- Add the same key in Vercel (Production, Preview, Development).
+- Keep `.env.local` out of version control.
 
-## Step 4: Initialize Database
+## 4. Schema & Migration Strategy
+- Introduce Prisma (or another ORM) to model `products`, `variants`, `sales`, etc.
+- Use PlanetScale branches to apply schema changes without downtime.
+- Seed data using a Prisma seed script or custom SQL fixtures instead of `src/lib/data/initDb.ts` (that script targets MongoDB).
 
-Run this command to create tables and seed data:
+## 5. Application Changes Required
+- Replace calls in `src/lib/data/mongoStore.ts` with MySQL-backed repositories (create `planetscaleStore.ts`).
+- Update `src/lib/data/store.ts` to export the new repository.
+- Revisit indexes, filters, and SSE broadcast payloads to ensure compatibility.
 
-```bash
-npx tsx src/lib/data/initDb.ts
-```
-
-This will:
-- ✅ Create `products` table
-- ✅ Create `sales` table  
-- ✅ Seed initial products from manifest
-- ✅ Seed 14 days of sales data
-
-## Step 5: Deploy to Vercel
-
-1. Go to Vercel Dashboard → Your Project → Settings → Environment Variables
-2. Add: `DATABASE_URL` = your PlanetScale connection string
-3. Redeploy your app
-
-## What You Get (FREE Forever)
-
-- ✅ **5GB storage** (1000x more than you need)
-- ✅ **1 billion row reads/month**
-- ✅ **10 million row writes/month**
-- ✅ Persistent data (survives deployments)
-- ✅ Works on localhost AND Vercel
-- ✅ No credit card required
-
-## Testing
-
-After setup, your products will:
-- ✅ Save permanently
-- ✅ Survive page refreshes
-- ✅ Persist across deployments
-- ✅ Work exactly the same on Vercel
+## 6. Testing & Rollout Checklist
+- ✅ Run Prisma migrations or SQL DDL on a staging branch.
+- ✅ Execute integration tests against PlanetScale (CRUD + category filters + SSE feeds).
+- ✅ Verify admin, retail, and client endpoints operate on the new backing store.
+- ✅ Validate health checks and analytics charts use the new data source.
 
 ## Troubleshooting
-
-**Error: DATABASE_URL not set**
-- Make sure `.env.local` exists with `DATABASE_URL`
-- Restart dev server: `npm run dev`
-
-**Error: Connection failed**
-- Verify connection string is correct
-- Check PlanetScale dashboard shows database as "Ready"
-- Ensure you're using the `@planetscale/database` format
-
-**Need help?**
-Check: https://planetscale.com/docs/tutorials/connect-nextjs-app
+- **Authentication errors** – Regenerate a password from the PlanetScale dashboard and update `DATABASE_URL` everywhere.
+- **SSL issues** – Ensure `sslaccept=strict` (or equivalent) remains in the connection string.
+- **Missing tables** – Confirm migrations ran; PlanetScale does not create schemas automatically.
+- **Stale data** – Revisit caching layers or revalidation calls once Prisma replaces the Mongo helpers.
 
 ---
 
-## Comparison: Before vs After
-
-### Before (File-based)
-- ❌ Data resets on Vercel deployments
-- ❌ Limited to read-only file system
-- ❌ No persistence in production
-
-### After (PlanetScale)
-- ✅ Data persists permanently
-- ✅ Works on localhost AND Vercel
-- ✅ 5GB free storage
-- ✅ Production-ready
+If you decide to move forward with PlanetScale, plan the migration as a dedicated milestone: freeze writes, export MongoDB, transform data to relational form, import into MySQL, run validation checks, then switch `store.ts` to the new adapters. Document the cutover thoroughly so the team can roll back if needed.

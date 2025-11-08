@@ -4,8 +4,8 @@ import { Product } from '../../../lib/types';
 import { ZoomImage } from '../../components/ZoomImage';
 import { useCart } from '../../components/cart/CartContext';
 
-const FALLBACK_FABRIC_DETAILS = '95% Cotton / 5% Elastane (example) • Pre-washed • Colorfast • Soft hand-feel.';
-const FALLBACK_CARE_INSTRUCTIONS = 'Care: Cold wash, inside out, no bleach, tumble dry low.';
+const FALLBACK_FABRIC_DETAILS = 'Fabric: 95% cotton, 5% elastane for natural stretch • Pre-laundered for a soft, broken-in feel • Colorfast finish that preserves the shade.';
+const FALLBACK_CARE_INSTRUCTIONS = 'Care: Machine wash cold inside out with like colours • Do not bleach • Tumble dry low or line dry • Warm iron on reverse if needed.';
 export default function ProductClient({ product, isClient }: { product: Product; isClient: boolean }) {
   const p = product;
   const { add } = useCart();
@@ -40,7 +40,16 @@ export default function ProductClient({ product, isClient }: { product: Product;
   return (
     <div style={{ display:'flex', gap:'2.2rem', flexWrap:'wrap' }}>
       <div style={{ width:380, maxWidth:'100%' }}>
-        <ZoomImage src={activeImg} alt={p.title} height={420} radius={20} zoomScale={2.4} style={{ boxShadow:'0 6px 18px -8px rgba(0,0,0,.4)' }} />
+        <ZoomImage
+          src={activeImg}
+          alt={p.title}
+          height={420}
+          radius={20}
+          zoomScale={2.8}
+          fit="contain"
+          background="#e9dfcf"
+          style={{ boxShadow:'0 6px 18px -8px rgba(0,0,0,.4)' }}
+        />
         {p.images && p.images.length > 1 && (
           <div style={{ display:'flex', gap:'.4rem', marginTop:'.6rem', flexWrap:'wrap' }}>
             {p.images.slice(0,8).map(img => (

@@ -180,7 +180,7 @@ export default function AddProductForm({ onClose }: { onClose?: () => void }) {
         <label style={fieldLabelStyle}><span className="flab">Subcategory</span><input name="subCategory" placeholder="e.g. Baggy" style={inputBoxStyle} /></label>
         <label style={fieldLabelStyle}><span className="flab">Hero Image (Auto)</span><input name="heroImage" placeholder="Auto-set from first uploaded image" style={{ ...inputBoxStyle, background: '#f5f5f5', cursor: 'not-allowed' }} readOnly /></label>
         <label style={{ ...fieldLabelStyle, gridColumn:'1 / -1' }}><span className="flab">Description</span><textarea name="description" rows={3} placeholder="Product description..." style={{ ...inputBoxStyle, resize:'vertical' }} /></label>
-        <label style={{ ...fieldLabelStyle, gridColumn:'1 / -1' }}><span className="flab">Fabric Details *</span><textarea name="fabricDetails" rows={2} placeholder="95% Cotton / 5% Elastane • Pre-washed • Colorfast" style={{ ...inputBoxStyle, resize:'vertical' }} required /></label>
+  <label style={{ ...fieldLabelStyle, gridColumn:'1 / -1' }}><span className="flab">Fabric Details *</span><textarea name="fabricDetails" rows={2} placeholder="Fabric: 95% cotton, 5% elastane • Pre-laundered for softness • Colourfast finish" style={{ ...inputBoxStyle, resize:'vertical' }} required /></label>
         <label style={{ ...fieldLabelStyle, gridColumn:'1 / -1' }}><span className="flab">Care Instructions</span><textarea name="careInstructions" rows={2} placeholder="Care: Cold wash, inside out, no bleach, tumble dry low." style={{ ...inputBoxStyle, resize:'vertical' }} /></label>
       </div>
       

@@ -21,7 +21,12 @@ export function ZoomImage({ src, alt, height = 160, aspectRatio, radius = 8, zoo
   const ref = React.useRef<HTMLDivElement | null>(null);
   const [origin, setOrigin] = React.useState('center center');
   const [hover, setHover] = React.useState(false);
+  const [scale, setScale] = React.useState(1);
+  const [isPinching, setIsPinching] = React.useState(false);
   const isCoarseRef = React.useRef(false);
+  const lastTapRef = React.useRef(0);
+  const pinchDistanceRef = React.useRef<number | null>(null);
+  const pinchStartScaleRef = React.useRef(1);
 
   React.useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -37,15 +42,54 @@ export function ZoomImage({ src, alt, height = 160, aspectRatio, radius = 8, zoo
     setOrigin(`${x.toFixed(2)}% ${y.toFixed(2)}%`);
   }
 
+  function handleDoubleTap(clientX: number, clientY: number) {
+    if (!ref.current) return;
+    updateOrigin(clientX, clientY);
+    setScale(prev => (prev > 1 ? 1 : zoomScale));
+  }
+
+  function distance(touches: React.TouchList) {
+    if (touches.length < 2) return 0;
+    const a = touches.item(0);
+    const b = touches.item(1);
+    if (!a || !b) return 0;
+    return Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY);
+  }
+
+  function midpoint(touches: React.TouchList) {
+    if (!ref.current || touches.length < 2) return null;
+    const a = touches.item(0);
+    const b = touches.item(1);
+    if (!a || !b) return null;
+    const x = (a.clientX + b.clientX) / 2;
+    const y = (a.clientY + b.clientY) / 2;
+    return { x, y };
+  }
+
   function onMouseMove(e: React.MouseEvent<HTMLDivElement>) {
     updateOrigin(e.clientX, e.clientY);
   }
 
   function onTouchMove(e: React.TouchEvent<HTMLDivElement>) {
+    if (noZoom) return;
     if (e.touches.length === 0) return;
-    const touch = e.touches[0];
-    updateOrigin(touch.clientX, touch.clientY);
+
+    if (e.touches.length >= 2 && pinchDistanceRef.current) {
+      e.preventDefault();
+      const dist = distance(e.touches);
+      if (!dist) return;
+      const ratio = dist / pinchDistanceRef.current;
+      const nextScale = Math.min(Math.max(1, pinchStartScaleRef.current * ratio), zoomScale * 1.5);
+      setScale(nextScale);
+  const mid = midpoint(e.touches);
+  if (mid) updateOrigin(mid.x, mid.y);
+    } else if (e.touches.length === 1) {
+      const touch = e.touches[0];
+      updateOrigin(touch.clientX, touch.clientY);
+    }
   }
+
+  const touchActionValue = isCoarseRef.current && !noZoom ? (scale > 1 ? 'none' : 'pan-y') : undefined;
 
   const containerStyle: React.CSSProperties = {
     position: 'relative',
@@ -55,6 +99,7 @@ export function ZoomImage({ src, alt, height = 160, aspectRatio, radius = 8, zoo
     ...(aspectRatio ? { aspectRatio } : {}),
     background,
     cursor: isCoarseRef.current ? 'default' : 'zoom-in',
+    touchAction: touchActionValue,
     ...style
   };
 
@@ -63,9 +108,9 @@ export function ZoomImage({ src, alt, height = 160, aspectRatio, radius = 8, zoo
     height: '100%',
     objectFit: fit,
     display: 'block',
-    transition: hover ? 'transform .15s ease-out' : 'transform .6s cubic-bezier(.22,.68,0,1)',
+    transition: isPinching ? 'none' : hover && !isCoarseRef.current && !noZoom ? 'transform .15s ease-out' : 'transform .45s cubic-bezier(.22,.68,0,1)',
     transformOrigin: origin,
-    transform: hover && !noZoom ? `scale(${zoomScale})` : 'scale(1)'
+    transform: !noZoom && !isCoarseRef.current && hover ? `scale(${zoomScale})` : `scale(${scale})`
   };
 
   return (
@@ -77,14 +122,43 @@ export function ZoomImage({ src, alt, height = 160, aspectRatio, radius = 8, zoo
       onMouseLeave={() => setHover(false)}
       onMouseMove={noZoom ? undefined : onMouseMove}
       onTouchStart={noZoom ? undefined : (event) => {
+        if (event.touches.length === 0) return;
         setHover(true);
-        if (event.touches.length > 0) {
+
+        if (event.touches.length >= 2) {
+          setIsPinching(true);
+          pinchDistanceRef.current = distance(event.touches);
+          pinchStartScaleRef.current = scale;
+          const mid = midpoint(event.touches);
+          if (mid) updateOrigin(mid.x, mid.y);
+        } else {
+          const now = Date.now();
           const touch = event.touches[0];
-          updateOrigin(touch.clientX, touch.clientY);
+          if (now - lastTapRef.current < 280) {
+            event.preventDefault();
+            handleDoubleTap(touch.clientX, touch.clientY);
+          } else {
+            updateOrigin(touch.clientX, touch.clientY);
+          }
+          lastTapRef.current = now;
         }
       }}
-      onTouchEnd={noZoom ? undefined : () => setHover(false)}
-      onTouchCancel={noZoom ? undefined : () => setHover(false)}
+      onTouchEnd={noZoom ? undefined : (event) => {
+        if (event.touches.length < 2) {
+          setIsPinching(false);
+          pinchDistanceRef.current = null;
+        }
+        if (event.touches.length === 0) {
+          setHover(false);
+          if (scale < 1.05) setScale(1);
+        }
+      }}
+      onTouchCancel={noZoom ? undefined : () => {
+        setIsPinching(false);
+        pinchDistanceRef.current = null;
+        setHover(false);
+        setScale(1);
+      }}
       onTouchMove={noZoom ? undefined : onTouchMove}
     >
       {/* plain img for now (could migrate to next/image) */}
