@@ -99,7 +99,6 @@ export function FloatingCartButton() {
 
   const handlePointerUp = React.useCallback((event: React.PointerEvent<HTMLDivElement>) => {
     if (activePointerIdRef.current !== null && event.pointerId !== activePointerIdRef.current) return;
-    event.preventDefault();
     event.currentTarget.releasePointerCapture?.(event.pointerId);
     endDrag();
   }, [endDrag]);
@@ -120,7 +119,6 @@ export function FloatingCartButton() {
 
   const handleMouseUp = React.useCallback((event: React.MouseEvent<HTMLDivElement>) => {
     if (!mouseDragActiveRef.current || activePointerIdRef.current !== null) return;
-    event.preventDefault();
     endDrag();
   }, [endDrag]);
 

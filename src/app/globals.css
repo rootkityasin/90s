@@ -5,7 +5,10 @@
 @font-face { font-family: 'Minggola'; src: local('Minggola'); font-weight:400; }
 @font-face {
   font-family: 'Rooster';
-  src: url('/assets/fonts/RoosterPersonalUse.ttf') format('truetype');
+  src:
+    local('Rooster Personal Use'),
+    local('Rooster'),
+    url('/assets/fonts/ROOSTER%20PERSONAL%20USE.ttf') format('truetype');
   font-weight: normal;
   font-style: normal;
 }
@@ -31,7 +34,7 @@ html, body { margin:0; padding:0; font-family: var(--font-body); background:#5b7
 
 .product-title-font { font-family: var(--font-product-title) !important; font-weight:600; letter-spacing:.01em; }
 .rooster-font {
-  font-family: 'Rooster', cursive !important;
+  font-family: 'Rooster', 'Great Vibes', 'Sail', cursive !important;
   font-weight: 600;
   letter-spacing: .01em;
 }

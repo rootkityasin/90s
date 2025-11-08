@@ -2,6 +2,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { formatCategoryLabel } from '../../lib/formatCategoryLabel';
 
 type CategoryDropdownProps = {
   target?: 'retail' | 'client';
@@ -75,17 +76,6 @@ export function CategoryDropdown({ target }: CategoryDropdownProps = {}) {
 
   const baseHref = resolvedTarget === 'client' ? '/client/catalog' : '/retail';
 
-  const labelize = (key: string) => {
-    switch (key) {
-      case 'tshirt': return 'T-Shirts';
-      case 'trouser': return 'Trousers';
-      case 'hoodies': return 'Hoodies';
-      case 'chinos': return 'Chinos';
-      case 'cargos': return 'Cargos';
-      default: return key.charAt(0).toUpperCase() + key.slice(1);
-    }
-  };
-
   const toggleDropdown = () => {
     setIsOpen(!isOpen);
   };
@@ -145,7 +135,7 @@ export function CategoryDropdown({ target }: CategoryDropdownProps = {}) {
                   onClick={closeDropdown}
                   className="category-link"
                 >
-                  {labelize(key)}
+                  {formatCategoryLabel(key)}
                 </Link>
                 {subMap[key]?.length ? (
                   <ul className="category-sublist">
@@ -156,7 +146,7 @@ export function CategoryDropdown({ target }: CategoryDropdownProps = {}) {
                           onClick={closeDropdown}
                           className="category-sublink"
                         >
-                          {sub}
+                          {formatCategoryLabel(undefined, sub)}
                         </Link>
                       </li>
                     ))}

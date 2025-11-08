@@ -3,9 +3,10 @@ import React from 'react';
 import { Product } from '../../../lib/types';
 import { ZoomImage } from '../../components/ZoomImage';
 import { useCart } from '../../components/cart/CartContext';
+import { formatCategoryLabel } from '../../../lib/formatCategoryLabel';
 
-const FALLBACK_FABRIC_DETAILS = 'Fabric: 95% cotton, 5% elastane for natural stretch • Pre-laundered for a soft, broken-in feel • Colorfast finish that preserves the shade.';
-const FALLBACK_CARE_INSTRUCTIONS = 'Care: Machine wash cold inside out with like colours • Do not bleach • Tumble dry low or line dry • Warm iron on reverse if needed.';
+const FALLBACK_FABRIC_DETAILS = 'Fabric: Premium cotton blend with natural stretch for breathable comfort. Pre-laundered for a soft, broken-in hand feel. Colorfast finishing preserves the tone wear after wear.';
+const FALLBACK_CARE_INSTRUCTIONS = 'Care: Machine wash cold inside out with like colours. Do not bleach. Tumble dry low or line dry. Warm iron on reverse if needed.';
 export default function ProductClient({ product, isClient }: { product: Product; isClient: boolean }) {
   const p = product;
   const { add } = useCart();
@@ -34,7 +35,7 @@ export default function ProductClient({ product, isClient }: { product: Product;
     });
   }
 
-  const categoryLabel = p.subCategory ? `${p.category} • ${p.subCategory}` : p.category;
+  const categoryLabel = formatCategoryLabel(p.category, p.subCategory);
   const productCode = (p.productCode && p.productCode.trim()) || p.slug.toUpperCase().replace(/[^A-Z0-9]+/g,'').slice(0,12);
 
   return (
@@ -62,7 +63,7 @@ export default function ProductClient({ product, isClient }: { product: Product;
       </div>
       <div style={{ flex:1, minWidth:300 }}>
         <h1 className='header-accent rooster-font' style={{ marginTop:0 }}>{p.title}</h1>
-        <p style={{ fontSize:'.62rem', letterSpacing:'.8px', textTransform:'uppercase', margin:'0 0 .8rem', color:'var(--color-accent)' }}>{categoryLabel}</p>
+  <p style={{ fontSize:'.62rem', letterSpacing:'.8px', margin:'0 0 .8rem', color:'var(--color-accent)' }}>{categoryLabel}</p>
     <p style={{ fontSize:'.65rem', letterSpacing:'.1em', textTransform:'uppercase', margin:'-.4rem 0 1rem', opacity:.7 }}>Product Code: {productCode}</p>
         {p.description?.trim() && (
           <p style={{ fontSize:'.8rem', lineHeight:1.45 }}>{p.description}</p>

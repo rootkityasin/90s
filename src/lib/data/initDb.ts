@@ -1,5 +1,6 @@
 // Database initialization script
-import { initializeDatabase } from './mongoStore';
+// Use the core module to avoid the Next.js server-only guard when running via Node.
+import { initializeDatabase } from './mongoStore.core';
 
 initializeDatabase()
   .then(() => {

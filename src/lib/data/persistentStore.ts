@@ -1,6 +1,7 @@
 // Persistent file-based store for products
 import { Product, ProductInput, SalesSnapshot } from '../types';
 import { generateProductsFromManifest } from './productManifest';
+import { ensureProfessionalDescription, ensureProfessionalFabricDetails, polishProductCopy } from '../formatProductCopy';
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs';
 import { join } from 'path';
 
@@ -9,8 +10,8 @@ const randomUUID = (typeof crypto !== 'undefined' && (crypto as any).randomUUID)
 const DATA_DIR = join(process.cwd(), 'data');
 const PRODUCTS_FILE = join(DATA_DIR, 'products.json');
 
-const DEFAULT_FABRIC_DETAILS = '95% Cotton / 5% Elastane (example) • Pre-washed • Colorfast • Soft hand-feel.';
-const DEFAULT_CARE_INSTRUCTIONS = 'Care: Cold wash, inside out, no bleach, tumble dry low.';
+const DEFAULT_FABRIC_DETAILS = 'Fabric: 95% cotton and 5% elastane for natural stretch. Pre-laundered for a soft, broken-in hand feel. Colorfast finishing preserves the tone wear after wear.';
+const DEFAULT_CARE_INSTRUCTIONS = 'Care: Machine wash cold inside out with like colours. Do not bleach. Tumble dry low or line dry. Warm iron on reverse if needed.';
 
 // Basic price heuristics by category
 const basePrice: Record<string, number> = { cargos: 2200, chinos: 2000, tshirt: 950, hoodies: 2600, trouser: 2400 };
@@ -29,7 +30,10 @@ function loadProducts(): Product[] {
   if (existsSync(PRODUCTS_FILE)) {
     try {
       const data = readFileSync(PRODUCTS_FILE, 'utf-8');
-      return JSON.parse(data);
+  const parsed: Product[] = JSON.parse(data);
+  const polished = parsed.map(polishProductCopy);
+  saveProducts(polished);
+  return polished;
     } catch (error) {
       console.error('Error loading products:', error);
     }
@@ -37,7 +41,7 @@ function loadProducts(): Product[] {
   
   // Generate initial products from manifest
   const manifestProducts = generateProductsFromManifest();
-  const products = manifestProducts.map(mp => ({
+  const products = manifestProducts.map((mp) => polishProductCopy({
     id: randomUUID(),
     slug: mp.slug,
     title: mp.title,
@@ -47,7 +51,7 @@ function loadProducts(): Product[] {
     fabricDetails: mp.fabricDetails || DEFAULT_FABRIC_DETAILS,
     careInstructions: mp.careInstructions || DEFAULT_CARE_INSTRUCTIONS,
     category: mp.category,
-    base: 'retail' as const, // Default to retail for manifest products
+    base: 'retail' as const,
     heroImage: mp.heroImage,
     images: mp.images,
     variants: [
@@ -101,19 +105,21 @@ export function addProduct(input: ProductInput) {
   const normalizedProductCode = input.productCode && input.productCode.trim()
     ? input.productCode.trim()
     : input.slug.toUpperCase().replace(/[^A-Z0-9]+/g,'').slice(0,12);
-  const p: Product = {
+  const baseProduct: Product = {
     id: randomUUID(),
     createdAt: now,
     updatedAt: now,
     ...input,
+    description: ensureProfessionalDescription(input.title, input.category, input.description),
     subCategory: normalizedSubCategory,
     productCode: normalizedProductCode,
-    fabricDetails: input.fabricDetails && input.fabricDetails.trim() ? input.fabricDetails : DEFAULT_FABRIC_DETAILS,
+    fabricDetails: ensureProfessionalFabricDetails(input.fabricDetails && input.fabricDetails.trim() ? input.fabricDetails : DEFAULT_FABRIC_DETAILS),
     careInstructions: input.careInstructions && input.careInstructions.trim() ? input.careInstructions : DEFAULT_CARE_INSTRUCTIONS
   };
-  products.unshift(p);
+  const product = polishProductCopy(baseProduct);
+  products.unshift(product);
   saveProducts(products);
-  return p;
+  return product;
 }
 
 export function updateProduct(id: string, patch: Partial<ProductInput>) {
@@ -130,20 +136,26 @@ export function updateProduct(id: string, patch: Partial<ProductInput>) {
         : current.slug.toUpperCase().replace(/[^A-Z0-9]+/g,'').slice(0,12))
     : current.productCode || current.slug.toUpperCase().replace(/[^A-Z0-9]+/g,'').slice(0,12);
   
-  products[idx] = {
+  const nextTitle = typeof patch.title === 'string' ? patch.title : current.title;
+  const nextCategory = typeof patch.category === 'string' ? patch.category : current.category;
+
+  products[idx] = polishProductCopy({
     ...current,
     ...patch,
     id: current.id, // Never change ID
     subCategory: normalizedSubCategory,
     productCode: normalizedProductCode,
+    description: patch.description !== undefined
+      ? ensureProfessionalDescription(nextTitle, nextCategory, patch.description as string | null)
+      : current.description,
     fabricDetails: patch.fabricDetails !== undefined
-      ? (patch.fabricDetails && patch.fabricDetails.trim() ? patch.fabricDetails : DEFAULT_FABRIC_DETAILS)
+      ? ensureProfessionalFabricDetails(patch.fabricDetails && (patch.fabricDetails as string).trim() ? patch.fabricDetails : DEFAULT_FABRIC_DETAILS)
       : current.fabricDetails,
     careInstructions: patch.careInstructions !== undefined
       ? (patch.careInstructions && patch.careInstructions.trim() ? patch.careInstructions : DEFAULT_CARE_INSTRUCTIONS)
       : current.careInstructions,
     updatedAt: new Date().toISOString()
-  };
+  });
   
   saveProducts(products);
   return products[idx];

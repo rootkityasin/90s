@@ -8,6 +8,7 @@ import FullEditForm from './components/FullEditForm';
 import AddProductForm from './components/AddProductForm';
 import CustomSelect from '../components/CustomSelect';
 import TokenLookupModal from './components/TokenLookupModal';
+import { formatCategoryLabel } from '../../lib/formatCategoryLabel';
 
 type Props = {
   productsInitial: Product[];
@@ -130,7 +131,7 @@ export default function AdminClient({ productsInitial = [], sales = [] }: Props)
             onChange={(value) => setCat(value)}
             options={[
               { value: 'all', label: 'All Categories' },
-              ...categories.map(c => ({ value: c, label: c }))
+              ...categories.map(c => ({ value: c, label: formatCategoryLabel(c) }))
             ]}
             placeholder="Select category"
             className="filter-cat"
@@ -139,7 +140,7 @@ export default function AdminClient({ productsInitial = [], sales = [] }: Props)
         </div>
         <select value={cat} onChange={e=>setCat(e.target.value)} style={controlStyle} aria-label='Filter category' className="filter-select filter-cat desktop-only">
           <option value='all'>All Categories</option>
-          {categories.map(c => <option key={c} value={c}>{c}</option>)}
+          {categories.map(c => <option key={c} value={c}>{formatCategoryLabel(c)}</option>)}
         </select>
         {/* Sort filter - render both, toggle via CSS to match product page */}
         <div className="mobile-only" style={{ width:'100%' }}>

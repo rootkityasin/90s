@@ -7,6 +7,7 @@ import { ProductCard } from './ProductCard';
 import { FadeUpDiv, Stagger } from './animations';
 import { motion } from 'framer-motion';
 import CustomSelect from './CustomSelect';
+import { formatCategoryLabel } from '../../lib/formatCategoryLabel';
 
 type ProductsPageProps = {
   title: string;
@@ -196,7 +197,7 @@ export function ProductsPage({ title, description, mode, productsInitial = [] }:
               onChange={(value) => setCat(value)}
               options={[
                 { value: 'all', label: 'All Categories' },
-                ...categories.map(c => ({ value: c, label: c }))
+                ...categories.map(c => ({ value: c, label: formatCategoryLabel(c) }))
               ]}
               placeholder="Select category"
               className="filter-cat"
@@ -205,7 +206,7 @@ export function ProductsPage({ title, description, mode, productsInitial = [] }:
           </div>
           <select value={cat} onChange={e=>setCat(e.target.value)} style={controlStyle} aria-label='Filter category' className="filter-select filter-cat desktop-only">
             <option value='all'>All Categories</option>
-            {categories.map(c => <option key={c} value={c}>{c}</option>)}
+            {categories.map(c => <option key={c} value={c}>{formatCategoryLabel(c)}</option>)}
           </select>
 
           {subCategoryOptions.length > 0 && (
@@ -216,7 +217,7 @@ export function ProductsPage({ title, description, mode, productsInitial = [] }:
                   onChange={(value) => setSubCat(value)}
                   options={[
                     { value: 'all', label: 'All Subcategories' },
-                    ...subCategoryOptions.map(sc => ({ value: sc, label: sc }))
+                    ...subCategoryOptions.map(sc => ({ value: sc, label: formatCategoryLabel(undefined, sc) }))
                   ]}
                   placeholder="Select subcategory"
                   className="filter-subcat"
@@ -225,7 +226,7 @@ export function ProductsPage({ title, description, mode, productsInitial = [] }:
               </div>
               <select value={subCat} onChange={e=>setSubCat(e.target.value)} style={controlStyle} aria-label='Filter subcategory' className="filter-select filter-subcat desktop-only">
                 <option value='all'>All Subcategories</option>
-                {subCategoryOptions.map(sc => <option key={sc} value={sc}>{sc}</option>)}
+                {subCategoryOptions.map(sc => <option key={sc} value={sc}>{formatCategoryLabel(undefined, sc)}</option>)}
               </select>
             </>
           )}

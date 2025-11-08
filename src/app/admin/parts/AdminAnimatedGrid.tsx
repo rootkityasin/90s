@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import type { Product } from '../../../lib/types';
 import { editProduct } from '../actions';
 import { useRouter } from 'next/navigation';
+import { formatCategoryLabel } from '../../../lib/formatCategoryLabel';
 
 const container = { hidden:{}, show:{ transition:{ staggerChildren:0.07 } } };
 const item = { hidden:{ opacity:0, y:18, scale:.95 }, show:{ opacity:1, y:0, scale:1, transition:{ duration:.5, ease:[0.22,0.68,0,1] } } };
@@ -50,7 +51,7 @@ export default function AdminAnimatedGrid({ products, onFullEdit }: { products: 
             )}
           </div>
           <h3 style={{ marginTop:'.5rem', fontFamily: "'Bebas Neue', sans-serif", fontSize: '1.15rem', letterSpacing: '0.5px' }}>{p.title}</h3>
-          <p style={{ fontSize:'.65rem' }}>{p.subCategory ? `${p.category} • ${p.subCategory}` : p.category}</p>
+          <p style={{ fontSize:'.65rem' }}>{formatCategoryLabel(p.category, p.subCategory)}</p>
           {p.productCode && <p style={{ fontSize:'.6rem', letterSpacing:'.12em', textTransform:'uppercase', opacity:.7 }}>Code: {p.productCode}</p>}
           <p style={{ fontSize:'.7rem' }}>Variants: {p.variants.length}</p>
           <details style={{ marginTop:'.6rem' }}>

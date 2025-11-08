@@ -3,6 +3,7 @@ import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { WHATSAPP_PHONE, WHATSAPP_WA_LINK, FACEBOOK_PAGE_URL, INSTAGRAM_URL } from '../../lib/config';
+import { formatCategoryLabel } from '../../lib/formatCategoryLabel';
 // Reuse same SVG icons as hero for consistency
 const icons = {
   whatsapp: (
@@ -110,12 +111,12 @@ export default function Footer({ role, clientAccess }: { role?: string; clientAc
           <ul>
             {categories.slice(0,8).map(c=> (
               <li key={c}>
-                <Link href={`${categoryBase}?category=${encodeURIComponent(c)}`}>{c}</Link>
+                <Link href={`${categoryBase}?category=${encodeURIComponent(c)}`}>{formatCategoryLabel(c)}</Link>
                 {categoryTree[c]?.length ? (
                   <ul className="footer-sublist">
                     {categoryTree[c].slice(0,3).map(sub => (
                       <li key={sub}>
-                        <Link href={`${categoryBase}?category=${encodeURIComponent(c)}&subCategory=${encodeURIComponent(sub)}`}>{sub}</Link>
+                        <Link href={`${categoryBase}?category=${encodeURIComponent(c)}&subCategory=${encodeURIComponent(sub)}`}>{formatCategoryLabel(undefined, sub)}</Link>
                       </li>
                     ))}
                   </ul>
