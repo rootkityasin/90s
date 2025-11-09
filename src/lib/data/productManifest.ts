@@ -229,6 +229,11 @@ export function generateProductsFromManifest(): GeneratedProductData[] {
   (Object.keys(categoryFiles) as RawCategory[]).forEach(cat => {
     categoryFiles[cat].forEach(file => {
       if (used.has(file)) return;
+      
+      // Extract subcategory from folder path (e.g., "tshirt/solid/file.jpg" -> subCategory: "solid")
+      const parts = file.split('/');
+      const subCategory = parts.length > 2 ? parts[1] : undefined;
+      
       const base = file.substring(file.lastIndexOf('/')+1);
       const isNamed = /[a-zA-Z]/.test(base) && base.includes(' ');
       const title = isNamed ? base.replace(/\.[a-z0-9]+$/i,'') : `${cat} style`; // generic title
@@ -238,7 +243,8 @@ export function generateProductsFromManifest(): GeneratedProductData[] {
         slug,
         title: title.replace(/-/g,' '),
         images: [`/assets/products/${file}`],
-        heroImage: `/assets/products/${file}`
+        heroImage: `/assets/products/${file}`,
+        subCategory
       });
     });
   });

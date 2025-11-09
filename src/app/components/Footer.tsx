@@ -23,59 +23,28 @@ export default function Footer({ role, clientAccess }: { role?: string; clientAc
   const [categoryTree, setCategoryTree] = React.useState<Record<string, string[]>>({});
   
   const pathname = usePathname();
-  const inClientMode = pathname.startsWith('/client') || role === 'client' || clientAccess;
-  const targetBase = inClientMode ? 'client' : 'retail';
+  const isClientPath = pathname.startsWith('/client');
+  const isRetailPath = pathname.startsWith('/retail');
+  const resolvedBase = isClientPath ? 'client' : isRetailPath ? 'retail' : (role === 'client' || clientAccess ? 'client' : 'retail');
+  const inClientMode = resolvedBase === 'client';
+  const targetBase = resolvedBase;
 
   React.useEffect(() => {
     let cancelled = false;
-    async function fetchCategories() {
+    async function load() {
       try {
-        const endpoint = targetBase === 'client' ? '/api/client/products' : '/api/retail/products';
-        const res = await fetch(endpoint, { cache: 'no-store' });
-        const data = await res.json();
-        if (!data?.success) return;
-        const products: any[] = Array.isArray(data.products) ? data.products : [];
-
-        const categoriesList: string[] = Array.isArray(data.categories) && data.categories.length
-          ? (data.categories as string[]).slice().sort((a, b) => a.localeCompare(b))
-          : Array.from(new Set(products.map((p: any) => p?.category).filter(Boolean))).sort((a, b) => a.localeCompare(b));
-
-        const treeRaw: Record<string, string[]> = data.categoryTree && typeof data.categoryTree === 'object'
-          ? Object.fromEntries(Object.entries(data.categoryTree).map(([key, value]) => [key, Array.isArray(value) ? (value as string[]).slice().sort((a, b) => a.localeCompare(b)) : []]))
-          : (() => {
-              const map: Record<string, string[]> = {};
-              products.forEach((p) => {
-                if (!p?.category) return;
-                if (!map[p.category]) map[p.category] = [];
-                if (p.subCategory && !map[p.category].includes(p.subCategory)) {
-                  map[p.category].push(p.subCategory);
-                }
-              });
-              Object.keys(map).forEach((key) => {
-                map[key] = map[key].slice().sort((a, b) => a.localeCompare(b));
-              });
-              return map;
-            })();
-
-        const tree: Record<string, string[]> = { ...treeRaw };
-        categoriesList.forEach((cat) => {
-          if (!tree[cat]) tree[cat] = [];
-        });
-
-        if (!cancelled) {
-          setCategories(categoriesList);
-          setCategoryTree(tree);
-        }
+        const mod = await import('../../lib/getCategoriesForBase');
+        const { fetchCategoriesForBase } = mod as typeof import('../../lib/getCategoriesForBase');
+        const { categories: catsRes, categoryTree: treeRes } = await fetchCategoriesForBase(targetBase);
+        if (cancelled) return;
+        setCategories(catsRes);
+        setCategoryTree(treeRes);
       } catch (error) {
-        if (!cancelled) {
-          console.error('Failed to fetch categories:', error);
-        }
+        if (!cancelled) console.error('Failed to load footer categories:', error);
       }
     }
-    fetchCategories();
-    return () => {
-      cancelled = true;
-    };
+    load();
+    return () => { cancelled = true; };
   }, [targetBase]);
   const shopHref = inClientMode ? '/client/catalog' : '/retail';
   const searchHref = inClientMode ? '/client/search' : '/search';
@@ -109,14 +78,23 @@ export default function Footer({ role, clientAccess }: { role?: string; clientAc
         <div className="footer-block">
           <h4 className="footer-head">Categories</h4>
           <ul>
-            {categories.slice(0,8).map(c=> (
-              <li key={c}>
-                <Link href={`${categoryBase}?category=${encodeURIComponent(c)}`}>{formatCategoryLabel(c)}</Link>
-                {categoryTree[c]?.length ? (
+            <li>
+              <Link href={categoryBase}>All Products</Link>
+            </li>
+            {categories.map((category) => (
+              <li key={category}>
+                <Link href={`${categoryBase}?category=${encodeURIComponent(category)}`}>
+                  {formatCategoryLabel(category)}
+                </Link>
+                {categoryTree[category]?.length ? (
                   <ul className="footer-sublist">
-                    {categoryTree[c].slice(0,3).map(sub => (
+                    {categoryTree[category].map((sub) => (
                       <li key={sub}>
-                        <Link href={`${categoryBase}?category=${encodeURIComponent(c)}&subCategory=${encodeURIComponent(sub)}`}>{formatCategoryLabel(undefined, sub)}</Link>
+                        <Link
+                          href={`${categoryBase}?category=${encodeURIComponent(category)}&subCategory=${encodeURIComponent(sub)}`}
+                        >
+                          {formatCategoryLabel(undefined, sub)}
+                        </Link>
                       </li>
                     ))}
                   </ul>

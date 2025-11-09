@@ -15,60 +15,33 @@ export function CategoryDropdown({ target }: CategoryDropdownProps = {}) {
   // Derive categories from product data to keep in sync with product list
   const [cats, setCats] = React.useState<string[]>([]);
   const [subMap, setSubMap] = React.useState<Record<string, string[]>>({});
+  
+  // Always use target prop if provided, otherwise derive from pathname
   const resolvedTarget = React.useMemo(() => {
     if (target) return target;
-    return pathname.startsWith('/client') ? 'client' : 'retail';
+    // Check if we're on client pages
+    if (pathname.startsWith('/client')) return 'client';
+    // Default to retail for all other pages
+    return 'retail';
   }, [target, pathname]);
 
   React.useEffect(() => {
     let cancelled = false;
-    async function fetchCategories() {
+    async function load() {
       try {
-        const endpoint = resolvedTarget === 'client' ? '/api/client/products' : '/api/retail/products';
-        const res = await fetch(endpoint, { cache: 'no-store' });
-        const data = await res.json();
-        if (!data?.success) return;
-        const list: any[] = Array.isArray(data.products) ? data.products : [];
-
-        const deriveTree = (products: any[]): Record<string, string[]> => {
-          const tree: Record<string, string[]> = {};
-          products.forEach((p) => {
-            if (!p?.category) return;
-            if (!tree[p.category]) tree[p.category] = [];
-            if (p.subCategory && !tree[p.category].includes(p.subCategory)) {
-              tree[p.category].push(p.subCategory);
-            }
-          });
-          Object.keys(tree).forEach((key) => {
-            tree[key] = tree[key].slice().sort((a, b) => a.localeCompare(b));
-          });
-          return tree;
-        };
-
-        const categories: string[] = Array.isArray(data.categories) && data.categories.length
-          ? (data.categories as string[]).slice().sort((a, b) => a.localeCompare(b))
-          : Array.from(new Set(list.map((p: any) => p?.category).filter(Boolean))).sort((a, b) => a.localeCompare(b));
-
-        const treeRaw: Record<string, string[]> = data.categoryTree && typeof data.categoryTree === 'object'
-          ? Object.fromEntries(Object.entries(data.categoryTree).map(([key, value]) => [key, Array.isArray(value) ? (value as string[]).slice().sort((a, b) => a.localeCompare(b)) : []]))
-          : deriveTree(list);
-
-        const tree: Record<string, string[]> = { ...treeRaw };
-        categories.forEach((cat) => {
-          if (!tree[cat]) tree[cat] = [];
-        });
-
-        if (!cancelled) {
-          setCats(categories);
-          setSubMap(tree);
-        }
+        const mod = await import('../../lib/getCategoriesForBase');
+        const { fetchCategoriesForBase } = mod as typeof import('../../lib/getCategoriesForBase');
+        const { categories, categoryTree } = await fetchCategoriesForBase(resolvedTarget);
+        if (cancelled) return;
+        setCats(categories);
+        setSubMap(categoryTree);
       } catch (error) {
         if (!cancelled) {
-          console.error('Failed to fetch categories:', error);
+          console.error('Failed to fetch dropdown categories:', error);
         }
       }
     }
-    fetchCategories();
+    load();
     return () => {
       cancelled = true;
     };

@@ -14,7 +14,7 @@ export function ProductCard({ p, showPrice, token }: { p: Product; showPrice: bo
   const productIdentifier = p.productCode || p.slug;
   const href = showPrice ? `/product/${productIdentifier}` : `/client/product/${productIdentifier}`;
   const formattedCategory = formatCategoryLabel(p.category, p.subCategory);
-  const blurb = p.description?.trim() || (formattedCategory ? formattedCategory.replace(' • ', ' — ') : 'View product for full details');
+  const blurb = p.description?.trim() || 'View product for full details';
   const productCode = (p.productCode && p.productCode.trim()) || p.slug.toUpperCase().replace(/[^A-Z0-9]+/g,'').slice(0,12);
   const [frameColor, setFrameColor] = React.useState<string>('#f1e8da');
 
@@ -73,8 +73,6 @@ export function ProductCard({ p, showPrice, token }: { p: Product; showPrice: bo
       cancelled = true;
     };
   }, [p.heroImage]);
-  const categoryLabel = formattedCategory;
-
   function handleAdd(e: React.MouseEvent) {
     e.preventDefault();
     e.stopPropagation();
@@ -104,28 +102,6 @@ export function ProductCard({ p, showPrice, token }: { p: Product; showPrice: bo
           position: 'relative'
         }}
       >
-        {categoryLabel && (
-          <span
-            style={{
-              position: 'absolute',
-              top: '10px',
-              right: '14px',
-              background: 'rgba(255, 255, 255, 0.82)',
-              color: 'rgba(0,0,0,0.6)',
-              border: '1px solid rgba(0,0,0,0.08)',
-              boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
-              fontSize: '.62rem',
-              letterSpacing: '.18em',
-              padding: '.42rem .9rem',
-              borderRadius: '999px',
-              backdropFilter: 'blur(6px)',
-              pointerEvents: 'none'
-            }}
-          >
-            {categoryLabel}
-          </span>
-        )}
-
     {/* Framed product visual */}
     <div className="pc-image" style={{ position: 'relative', minHeight: 0, margin: 0, background: frameColor }}>
           <ZoomImage

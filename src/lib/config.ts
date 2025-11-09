@@ -2,7 +2,7 @@
 
 // Read from environment variables, with fallback to the original hardcoded values for local development.
 // On Render, you will set these environment variables in the dashboard.
-const RAW_WHATSAPP_PHONE = process.env.NEXT_PUBLIC_WHATSAPP_PHONE || '01710074092';
+const RAW_WHATSAPP_PHONE = process.env.NEXT_PUBLIC_WHATSAPP_PHONE || '+8801710074092';
 
 const normalizedWhatsApp = (() => {
 	const digits = RAW_WHATSAPP_PHONE.replace(/\D/g, '');
