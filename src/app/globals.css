@@ -302,6 +302,22 @@ button:disabled { opacity:.5; cursor:not-allowed; }
   margin: 0;
 }
 
+.client-token-modal {
+  background-color: #76918f;
+  color: rgba(248, 245, 235, 0.95);
+  border: 1px solid rgba(18, 38, 41, 0.35);
+  background-image:
+    linear-gradient(140deg, rgba(255, 255, 240, 0.38), rgba(255, 255, 235, 0.08) 55%, rgba(20, 47, 49, 0.12) 100%),
+    url('/assets/textures/detailed_grunge_texture_background_3012.jpg');
+  background-size: cover, cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-blend-mode: soft-light, multiply;
+  position: relative;
+  overflow: hidden;
+}
+
+
 /* Ribbon at top-right */
 .card-ribbon {
   /* tune with CSS vars to keep proportions consistent */

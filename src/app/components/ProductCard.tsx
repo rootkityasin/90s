@@ -102,8 +102,8 @@ export function ProductCard({ p, showPrice, token }: { p: Product; showPrice: bo
           position: 'relative'
         }}
       >
-    {/* Framed product visual */}
-    <div className="pc-image" style={{ position: 'relative', minHeight: 0, margin: 0, background: frameColor }}>
+  {/* Framed product visual */}
+  <div className="pc-image" style={{ position: 'relative', minHeight: 0, margin: 0, background: frameColor, marginBottom: '.5rem' }}>
           <ZoomImage
             src={p.heroImage}
             alt={p.title}

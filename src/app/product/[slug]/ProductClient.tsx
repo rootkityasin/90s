@@ -7,6 +7,26 @@ import { formatCategoryLabel } from '../../../lib/formatCategoryLabel';
 
 const FALLBACK_FABRIC_DETAILS = 'Fabric: Premium cotton blend with natural stretch for breathable comfort. Pre-laundered for a soft, broken-in hand feel. Colorfast finishing preserves the tone wear after wear.';
 const FALLBACK_CARE_INSTRUCTIONS = 'Care: Machine wash cold inside out with like colours. Do not bleach. Tumble dry low or line dry. Warm iron on reverse if needed.';
+
+type OrderDetails = {
+  name: string;
+  email: string;
+  phone: string;
+  company: string;
+  address: string;
+  notes: string;
+};
+
+const EMPTY_ORDER_DETAILS: OrderDetails = {
+  name: '',
+  email: '',
+  phone: '',
+  company: '',
+  address: '',
+  notes: ''
+};
+
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 export default function ProductClient({ product, isClient }: { product: Product; isClient: boolean }) {
   const p = product;
   const { add } = useCart();
@@ -15,16 +35,87 @@ export default function ProductClient({ product, isClient }: { product: Product;
   const [qty, setQty] = React.useState(1);
   const [generatedToken, setGeneratedToken] = React.useState<string | null>(null);
   const [copied, setCopied] = React.useState(false);
+  const [showOrderForm, setShowOrderForm] = React.useState(false);
+  const [orderDetails, setOrderDetails] = React.useState<OrderDetails>({ ...EMPTY_ORDER_DETAILS });
+  const [formError, setFormError] = React.useState<string | null>(null);
+  const [orderSubmitted, setOrderSubmitted] = React.useState(false);
+  const [submittedOrder, setSubmittedOrder] = React.useState<OrderDetails | null>(null);
 
   const variant = p.variants[variantIndex];
   
   function inc(delta: number) { setQty(q => Math.max(1, q + delta)); }
   function handleAdd() { add(p, variant, qty); }
 
-  function handleGenerateToken() {
-    const tokenString = `${variant.sku}:${variant.color.replace(/\s+/g, '-')}:${variant.size}:${qty}`;
+  function buildTokenString() {
+    return `${variant.sku}:${variant.color.replace(/\s+/g, '-')}:${variant.size}:${qty}`;
+  }
+
+  function openOrderForm() {
+    setShowOrderForm(true);
+    setGeneratedToken(null);
+    setOrderSubmitted(false);
+    setFormError(null);
+    setSubmittedOrder(null);
+    setCopied(false);
+  }
+
+  function closeOrderForm() {
+    setShowOrderForm(false);
+    setFormError(null);
+  }
+
+  function handleOrderInputChange(field: keyof OrderDetails, value: string) {
+    setOrderDetails(prev => ({ ...prev, [field]: value }));
+    if (formError) setFormError(null);
+  }
+
+  function handleOrderSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const trimmed: OrderDetails = {
+      name: orderDetails.name.trim(),
+      email: orderDetails.email.trim(),
+      phone: orderDetails.phone.trim(),
+      company: orderDetails.company.trim(),
+      address: orderDetails.address.trim(),
+      notes: orderDetails.notes.trim()
+    };
+
+    const errors: string[] = [];
+    if (!trimmed.name) errors.push('Name is required.');
+    if (!trimmed.email || !EMAIL_REGEX.test(trimmed.email)) errors.push('Valid email is required.');
+    if (!trimmed.phone) errors.push('Phone number is required.');
+    if (!trimmed.address) errors.push('Address is required.');
+
+    if (errors.length) {
+      setFormError(errors.join(' '));
+      return;
+    }
+
+    const tokenString = buildTokenString();
     setGeneratedToken(tokenString);
     setCopied(false);
+    setFormError(null);
+    setOrderSubmitted(true);
+    setSubmittedOrder(trimmed);
+    setOrderDetails({ ...EMPTY_ORDER_DETAILS });
+    setShowOrderForm(false);
+
+    console.info('Client token generated', {
+      productCode,
+      variantSKU: variant.sku,
+      quantity: qty,
+      clientDetails: trimmed
+    });
+  }
+
+  function resetTokenFlow() {
+    setGeneratedToken(null);
+    setOrderSubmitted(false);
+    setSubmittedOrder(null);
+    setShowOrderForm(true);
+    setCopied(false);
+    setOrderDetails({ ...EMPTY_ORDER_DETAILS });
+    setFormError(null);
   }
 
   function handleCopy() {
@@ -93,12 +184,26 @@ export default function ProductClient({ product, isClient }: { product: Product;
         </div>
 
         {isClient ? (
-          <div style={{ marginTop: '1.5rem' }}>
-            <button onClick={handleGenerateToken} style={{ marginBottom: '1rem' }}>Generate Token</button>
-            {generatedToken && (
-              <div style={{ maxWidth: 320 }}>
-                <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-                  <input type="text" readOnly value={generatedToken} style={{ ...selectStyle, flex: 1, padding: '0.8rem', paddingRight: '2.5rem', background: '#111' }} />
+          <div style={{ marginTop: '1.5rem', maxWidth: 520 }}>
+            <button onClick={openOrderForm} style={{ marginBottom: '1rem' }}>Provide Details &amp; Generate Token</button>
+
+            {orderSubmitted && generatedToken && (
+              <div style={successCardStyle}>
+                <div style={{ fontSize: '.8rem', fontWeight: 600, letterSpacing: '.08em', textTransform: 'uppercase', marginBottom: '.75rem' }}>
+                  Token ready — share with the 90s team.
+                </div>
+                {submittedOrder && (
+                  <dl style={detailsGridStyle}>
+                    <dt>Name</dt><dd>{submittedOrder.name}</dd>
+                    <dt>Email</dt><dd>{submittedOrder.email}</dd>
+                    {submittedOrder.phone && (<><dt>Phone</dt><dd>{submittedOrder.phone}</dd></>)}
+                    {submittedOrder.company && (<><dt>Company</dt><dd>{submittedOrder.company}</dd></>)}
+                    <dt>Address</dt><dd>{submittedOrder.address}</dd>
+                    {submittedOrder.notes && (<><dt>Notes</dt><dd>{submittedOrder.notes}</dd></>)}
+                  </dl>
+                )}
+                <div style={{ position: 'relative', display: 'flex', alignItems: 'center', marginTop: '1rem' }}>
+                  <input type="text" readOnly value={generatedToken} style={tokenInputStyle} />
                   <button onClick={handleCopy} title={copied ? 'Copied!' : 'Copy Token'} style={{ position: 'absolute', right: 1, top: 1, bottom: 1, background: 'transparent', border: 'none', padding: '0 0.75rem', cursor: 'pointer', color: copied ? 'var(--color-accent)' : '#fff' }}>
                     {copied ? (
                       <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M12.736 3.97a.733.733 0 0 1 1.047 0c.286.286.29.756.01 1.05L7.88 12.01a.733.733 0 0 1-1.065.02L3.217 8.384a.757.757 0 0 1 0-1.06.733.733 0 0 1 1.047 0l3.052 3.093 5.4-6.425a.247.247 0 0 1 .02-.022Z"/></svg>
@@ -106,6 +211,109 @@ export default function ProductClient({ product, isClient }: { product: Product;
                       <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
                     )}
                   </button>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '.75rem', marginTop: '1rem', flexWrap: 'wrap', fontSize: '.62rem', letterSpacing: '.1em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.68)' }}>
+                  <span>Variant: {variant.size} · Qty: {qty}</span>
+                  <button type="button" className="secondary" onClick={resetTokenFlow} style={{ border: '1px solid rgba(255,255,255,0.2)' }}>
+                    Generate another token
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {showOrderForm && (
+              <div style={modalOverlayStyle} onClick={closeOrderForm}>
+                <div style={modalCardStyle} className="client-token-modal" onClick={e => e.stopPropagation()}>
+                  <button
+                    type="button"
+                    onClick={closeOrderForm}
+                    style={modalCloseButtonStyle}
+                    aria-label="Close order details form"
+                  >
+                    ×
+                  </button>
+                  <h2 style={{ margin: '0 0 1rem', fontSize: '1.25rem', letterSpacing: '.6px' }}>Share details to lock your token</h2>
+                  <p style={{ margin: '0 0 1.4rem', fontSize: '.72rem', lineHeight: 1.55, color: 'rgba(248,245,235,0.9)' }}>
+                    Provide the essentials so our sourcing team can reference this SKU token and follow up quickly with samples, pricing, or contracts.
+                  </p>
+                  {formError && <p style={{ ...errorTextStyle, color: '#ffb4a2', marginBottom: '.75rem' }}>{formError}</p>}
+                  <form onSubmit={handleOrderSubmit} style={formLayoutStyle}>
+                    <div style={formGroupStyle}>
+                      <label style={modalLabelStyle}>Full Name<span style={{ color: '#fdd6ba', marginLeft: 4 }}>*</span></label>
+                      <input
+                        type="text"
+                        value={orderDetails.name}
+                        onChange={e => handleOrderInputChange('name', e.target.value)}
+                        style={modalInputStyle}
+                        placeholder="e.g. Alex Rahman"
+                        required
+                      />
+                    </div>
+                    <div style={formGroupStyle}>
+                      <label style={modalLabelStyle}>Email<span style={{ color: '#fdd6ba', marginLeft: 4 }}>*</span></label>
+                      <input
+                        type="email"
+                        value={orderDetails.email}
+                        onChange={e => handleOrderInputChange('email', e.target.value)}
+                        style={modalInputStyle}
+                        placeholder="name@company.com"
+                        required
+                      />
+                    </div>
+                    <div style={twoColumnGroupStyle}>
+                      <div style={{ ...formGroupStyle, marginBottom: 0, maxWidth: 220 }}>
+                        <label style={modalLabelStyle}>Phone<span style={{ color: '#fdd6ba', marginLeft: 4 }}>*</span></label>
+                        <input
+                          type="tel"
+                          value={orderDetails.phone}
+                          onChange={e => handleOrderInputChange('phone', e.target.value)}
+                          style={modalInputStyle}
+                          placeholder="e.g. +8801XXXXXXX"
+                          required
+                        />
+                      </div>
+                      <div style={{ ...formGroupStyle, marginBottom: 0, maxWidth: 220 }}>
+                        <label style={modalLabelStyle}>Company</label>
+                        <input
+                          type="text"
+                          value={orderDetails.company}
+                          onChange={e => handleOrderInputChange('company', e.target.value)}
+                          style={modalInputStyle}
+                          placeholder="Optional"
+                        />
+                      </div>
+                    </div>
+                    <div style={formGroupStyle}>
+                      <label style={modalLabelStyle}>Address<span style={{ color: '#fdd6ba', marginLeft: 4 }}>*</span></label>
+                      <textarea
+                        value={orderDetails.address}
+                        onChange={e => handleOrderInputChange('address', e.target.value)}
+                        style={{ ...modalInputStyle, minHeight: 90, resize: 'vertical' }}
+                        placeholder="Delivery or sample drop address"
+                        required
+                      />
+                    </div>
+                    <div style={formGroupStyle}>
+                      <label style={modalLabelStyle}>Notes</label>
+                      <textarea
+                        value={orderDetails.notes}
+                        onChange={e => handleOrderInputChange('notes', e.target.value)}
+                        style={{ ...modalInputStyle, minHeight: 70, resize: 'vertical' }}
+                        placeholder="Fabric preference, timeline, extra context (optional)"
+                      />
+                    </div>
+                    <div style={{ display: 'flex', gap: '.75rem', flexWrap: 'wrap', marginTop: '1.4rem' }}>
+                      <button type="submit">Submit &amp; Generate Token</button>
+                      <button
+                        type="button"
+                        className="secondary"
+                        onClick={() => setOrderDetails({ ...EMPTY_ORDER_DETAILS })}
+                        style={{ border: '1px solid rgba(17,24,39,0.22)', color: 'rgba(17,24,39,0.72)' }}
+                      >
+                        Clear Form
+                      </button>
+                    </div>
+                  </form>
                 </div>
               </div>
             )}
@@ -127,3 +335,23 @@ export default function ProductClient({ product, isClient }: { product: Product;
 const selectStyle: React.CSSProperties = { background:'#1e2b4f', color:'#fff', border:'1px solid #22315a', padding:'.55rem .75rem', borderRadius:10, fontSize:'.7rem' };
 const qtyBtn: React.CSSProperties = { background:'var(--color-accent)', color:'#fff', border:'none', width:34, height:34, borderRadius:10, fontWeight:700, cursor:'pointer', boxShadow:'0 2px 4px rgba(0,0,0,.25)' };
 const labelStyle: React.CSSProperties = { fontSize:'.6rem', textTransform:'uppercase', letterSpacing:'.8px', display:'flex', flexDirection:'column', gap:'.25rem' };
+const formGroupStyle: React.CSSProperties = { display:'flex', flexDirection:'column', gap:'.35rem', marginBottom:'.8rem' };
+const errorTextStyle: React.CSSProperties = { fontSize:'.65rem', margin:'0 0 .6rem' };
+const successCardStyle: React.CSSProperties = { marginTop:'1.2rem', padding:'1.25rem 1.4rem', borderRadius:16, background:'rgba(15,22,40,0.98)', border:'1px solid rgba(122,2,2,0.35)', color:'#f7f7f7', boxShadow:'0 24px 42px -26px rgba(0,0,0,.7)' };
+const detailsGridStyle: React.CSSProperties = { margin:0, display:'grid', gridTemplateColumns:'auto 1fr', columnGap:'.75rem', rowGap:'.35rem', fontSize:'.68rem', letterSpacing:'.05em' };
+const tokenInputStyle: React.CSSProperties = { ...selectStyle, flex:1, padding:'0.8rem', paddingRight:'2.5rem', background:'#111' };
+const modalOverlayStyle: React.CSSProperties = { position:'fixed', inset:0, background:'rgba(0,0,0,.55)', backdropFilter:'blur(4px)', display:'flex', alignItems:'flex-start', justifyContent:'center', overflowY:'auto', padding:'4rem 1rem', zIndex:240 };
+const modalCardStyle: React.CSSProperties = {
+  padding: '2.2rem 2.4rem 2rem',
+  borderRadius: 26,
+  width: 'min(92vw, 520px)',
+  position: 'relative',
+  boxShadow: '0 40px 80px -45px rgba(0,0,0,.85)',
+  border: '1px solid rgba(120,86,52,0.18)',
+  overflow: 'hidden'
+};
+const modalCloseButtonStyle: React.CSSProperties = { position:'absolute', top:12, right:14, background:'#214c50', color:'#f4f1e8', border:'none', borderRadius:'50%', width:40, height:40, display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', boxShadow:'0 18px 34px -18px rgba(12,35,40,0.55)', fontSize:'1.25rem', fontWeight:600, lineHeight:1 };
+const formLayoutStyle: React.CSSProperties = { display:'flex', flexDirection:'column', gap:'.65rem' };
+const twoColumnGroupStyle: React.CSSProperties = { display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(180px,1fr))', gap:'1.2rem', alignItems:'start', marginBottom:'.75rem' };
+const modalLabelStyle: React.CSSProperties = { fontSize:'.62rem', textTransform:'uppercase', letterSpacing:'.85px', color:'rgba(248,245,235,0.88)' };
+const modalInputStyle: React.CSSProperties = { width:'100%', padding:'.75rem .85rem', borderRadius:12, border:'1px solid rgba(19,34,36,0.28)', background:'rgba(248,245,235,0.94)', fontSize:'.78rem', letterSpacing:'.3px', color:'#0f1d1e', boxShadow:'inset 0 1px 3px rgba(17,24,39,0.12)' };
