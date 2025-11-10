@@ -7,38 +7,38 @@ const processSteps = [
   {
     title: 'Brief & Tech Pack Intake',
     detail: 'Collect mood boards, tech packs, target costs, and launch timeline to align on scope and deliverables.',
-    color: '#FF8A65',
-    icon: '📝'
+    color: '#111111',
+    icon: '✍'
   },
   {
     title: 'Fabric / Trim Matrix & Target Cost',
     detail: 'Curate mill and trim options with pricing ladders so you can pick the mix that fits margin goals.',
-    color: '#FFA726',
-    icon: '🧵'
+    color: '#111111',
+    icon: '✂'
   },
   {
     title: 'Sample Development & Fit Iterations',
     detail: 'Coordinate proto, fit, and pre-production samples with tracked feedback loops until final approvals.',
-    color: '#FDD835',
-    icon: '🧪'
+    color: '#111111',
+    icon: '⚙'
   },
   {
     title: 'PP Approval / Bulk Line Allocation',
     detail: 'Lock production slots, confirm PP samples, and assign factories that match category expertise.',
-    color: '#4CAF50',
-    icon: '📦'
+    color: '#111111',
+    icon: '⚑'
   },
   {
     title: 'Inline & Final QC / Compliance Docs',
     detail: 'Layered QA gates and documentation keep quality consistent and audit-ready for every shipment.',
-    color: '#29B6F6',
-    icon: '✅'
+    color: '#111111',
+    icon: '☑'
   },
   {
     title: 'Consolidation & Dispatch',
     detail: 'Manage packing, carton coding, and freight coordination so orders depart on time with clear paperwork.',
-    color: '#AB47BC',
-    icon: '🚚'
+    color: '#111111',
+    icon: '✈'
   }
 ];
 
@@ -98,12 +98,12 @@ export function AboutContent({ audience = 'retail' }: { audience?: AboutAudience
 
         <Section title="Why Brands Choose Us">
           <ul style={listStyle}>
-            <li><span aria-hidden="true" style={{ marginRight: '.45rem' }}>⚡</span><strong>Speed:</strong> Optimized sample lead times and rapid turnaround on bulk orders.</li>
-            <li><span aria-hidden="true" style={{ marginRight: '.45rem' }}>🔍</span><strong>Transparency:</strong> SKU/token system providing full traceability for every quote and sample.</li>
-            <li><span aria-hidden="true" style={{ marginRight: '.45rem' }}>🎛️</span><strong>Versatility:</strong> Knit, woven, denim, and specialty fabrics—from small runs to large-scale production.</li>
-            <li><span aria-hidden="true" style={{ marginRight: '.45rem' }}>🧵</span><strong>Quality Discipline:</strong> Multi-layer QC gates covering fabric inspection, inline monitoring, and final packing checks.</li>
-            <li><span aria-hidden="true" style={{ marginRight: '.45rem' }}>🤝</span><strong>Competitive Pricing:</strong> Strategic vendor relationships ensuring market-leading landed costs.</li>
-            <li><span aria-hidden="true" style={{ marginRight: '.45rem' }}>📜</span><strong>Fully Certified:</strong> VAT/TAX compliant with proper business licensing for professional operations.</li>
+            <li><span aria-hidden="true" style={{ marginRight: '.45rem' }}>✦</span><strong>Speed:</strong> Optimized sample lead times and rapid turnaround on bulk orders.</li>
+            <li><span aria-hidden="true" style={{ marginRight: '.45rem' }}>✹</span><strong>Transparency:</strong> SKU/token system providing full traceability for every quote and sample.</li>
+            <li><span aria-hidden="true" style={{ marginRight: '.45rem' }}>✷</span><strong>Versatility:</strong> Knit, woven, denim, and specialty fabrics—from small runs to large-scale production.</li>
+            <li><span aria-hidden="true" style={{ marginRight: '.45rem' }}>✂</span><strong>Quality Discipline:</strong> Multi-layer QC gates covering fabric inspection, inline monitoring, and final packing checks.</li>
+            <li><span aria-hidden="true" style={{ marginRight: '.45rem' }}>☌</span><strong>Competitive Pricing:</strong> Strategic vendor relationships ensuring market-leading landed costs.</li>
+            <li><span aria-hidden="true" style={{ marginRight: '.45rem' }}>✒</span><strong>Fully Certified:</strong> VAT/TAX compliant with proper business licensing for professional operations.</li>
           </ul>
         </Section>
 
@@ -126,7 +126,7 @@ export function AboutContent({ audience = 'retail' }: { audience?: AboutAudience
               <path
                 d="M80 180 H920 Q960 180 960 220 V300 Q960 340 920 340 H80 Q40 340 40 300 V220 Q40 180 80 180 Z"
                 fill="none"
-                stroke="#3daaf5"
+                stroke="#22160c"
                 strokeWidth="10"
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -159,7 +159,7 @@ export function AboutContent({ audience = 'retail' }: { audience?: AboutAudience
           <p>
             Since our founding in 2023, 90's Legacy has established itself as a trusted partner for brands seeking 
             quality garment production with professional service. Our unlimited production capacity through strategic 
-            manufacturing partnerships allows us to scale with your business needs—from initial sampling to full production runs.
+            manufacturing partnerships allows us to scale with your business needs from initial sampling to full production runs.
           </p>
         </Section>
         {audience === 'retail' && (

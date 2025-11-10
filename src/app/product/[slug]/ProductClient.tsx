@@ -40,15 +40,12 @@ export default function ProductClient({ product, isClient }: { product: Product;
   const [formError, setFormError] = React.useState<string | null>(null);
   const [orderSubmitted, setOrderSubmitted] = React.useState(false);
   const [submittedOrder, setSubmittedOrder] = React.useState<OrderDetails | null>(null);
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
 
   const variant = p.variants[variantIndex];
   
   function inc(delta: number) { setQty(q => Math.max(1, q + delta)); }
   function handleAdd() { add(p, variant, qty); }
-
-  function buildTokenString() {
-    return `${variant.sku}:${variant.color.replace(/\s+/g, '-')}:${variant.size}:${qty}`;
-  }
 
   function openOrderForm() {
     setShowOrderForm(true);
@@ -57,6 +54,7 @@ export default function ProductClient({ product, isClient }: { product: Product;
     setFormError(null);
     setSubmittedOrder(null);
     setCopied(false);
+    setIsSubmitting(false);
   }
 
   function closeOrderForm() {
@@ -69,8 +67,9 @@ export default function ProductClient({ product, isClient }: { product: Product;
     if (formError) setFormError(null);
   }
 
-  function handleOrderSubmit(event: React.FormEvent<HTMLFormElement>) {
+  async function handleOrderSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (isSubmitting) return;
     const trimmed: OrderDetails = {
       name: orderDetails.name.trim(),
       email: orderDetails.email.trim(),
@@ -90,22 +89,76 @@ export default function ProductClient({ product, isClient }: { product: Product;
       setFormError(errors.join(' '));
       return;
     }
+    setIsSubmitting(true);
+    try {
+      const response = await fetch('/api/client/tokens', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sku: variant.sku,
+          quantity: qty,
+          color: variant.color,
+          size: variant.size,
+          productId: p.id,
+          productCode,
+          variantId: variant.id,
+          productSnapshot: {
+            productTitle: p.title,
+            heroImage: p.heroImage,
+            productSlug: p.slug,
+            productCode
+          },
+          client: {
+            name: trimmed.name,
+            email: trimmed.email,
+            phone: trimmed.phone,
+            company: trimmed.company || undefined,
+            address: trimmed.address,
+            notes: trimmed.notes || undefined
+          }
+        })
+      });
 
-    const tokenString = buildTokenString();
-    setGeneratedToken(tokenString);
-    setCopied(false);
-    setFormError(null);
-    setOrderSubmitted(true);
-    setSubmittedOrder(trimmed);
-    setOrderDetails({ ...EMPTY_ORDER_DETAILS });
-    setShowOrderForm(false);
+      const data = await response.json();
+      if (!response.ok || !data?.success) {
+        throw new Error(data?.error || 'Failed to generate token.');
+      }
 
-    console.info('Client token generated', {
-      productCode,
-      variantSKU: variant.sku,
-      quantity: qty,
-      clientDetails: trimmed
-    });
+      const tokenString: string | undefined = data?.token || data?.record?.token;
+      if (!tokenString) {
+        throw new Error('Token not returned by server.');
+      }
+
+      const serverClient = data?.record?.client;
+      const confirmedClient: OrderDetails = serverClient ? {
+        name: serverClient.name,
+        email: serverClient.email,
+        phone: serverClient.phone,
+        company: serverClient.company ?? '',
+        address: serverClient.address,
+        notes: serverClient.notes ?? ''
+      } : trimmed;
+
+      setGeneratedToken(tokenString);
+      setCopied(false);
+      setFormError(null);
+      setOrderSubmitted(true);
+      setSubmittedOrder(confirmedClient);
+      setOrderDetails({ ...EMPTY_ORDER_DETAILS });
+      setShowOrderForm(false);
+
+      console.info('Client token stored', {
+        token: tokenString,
+        productCode,
+        variantSKU: variant.sku,
+        quantity: qty,
+        clientDetails: confirmedClient
+      });
+    } catch (err: any) {
+      setFormError(err?.message || 'Failed to generate token. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   function resetTokenFlow() {
@@ -116,6 +169,7 @@ export default function ProductClient({ product, isClient }: { product: Product;
     setCopied(false);
     setOrderDetails({ ...EMPTY_ORDER_DETAILS });
     setFormError(null);
+    setIsSubmitting(false);
   }
 
   function handleCopy() {
@@ -303,7 +357,9 @@ export default function ProductClient({ product, isClient }: { product: Product;
                       />
                     </div>
                     <div style={{ display: 'flex', gap: '.75rem', flexWrap: 'wrap', marginTop: '1.4rem' }}>
-                      <button type="submit">Submit &amp; Generate Token</button>
+                      <button type="submit" disabled={isSubmitting}>
+                        {isSubmitting ? 'Generating…' : 'Submit & Generate Token'}
+                      </button>
                       <button
                         type="button"
                         className="secondary"

@@ -32,3 +32,34 @@ export type SalesSnapshot = {
   orders: number;
   revenueBDT: number;
 };
+
+export type ClientTokenContact = {
+  name: string;
+  email: string;
+  phone: string;
+  company?: string;
+  address: string;
+  notes?: string;
+};
+
+export type ClientTokenSnapshot = {
+  productTitle?: string;
+  heroImage?: string;
+  productSlug?: string;
+  productCode?: string;
+};
+
+export type ClientTokenRecord = {
+  token: string;
+  sku: string;
+  productId?: string;
+  productCode?: string;
+  variantId?: string;
+  quantity: number;
+  color: string;
+  size: string;
+  client: ClientTokenContact;
+  productSnapshot?: ClientTokenSnapshot;
+  createdAt: string;
+  updatedAt: string;
+};

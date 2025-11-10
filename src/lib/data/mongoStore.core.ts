@@ -1,11 +1,75 @@
 // MongoDB Atlas store with 512MB free tier (permanent)
 import { MongoClient, Db, Collection, ObjectId } from 'mongodb';
-import { Product, ProductInput, SalesSnapshot } from '../types';
+import {
+  Product,
+  ProductInput,
+  SalesSnapshot,
+  ClientTokenRecord,
+  ClientTokenContact,
+  ClientTokenSnapshot
+} from '../types';
 import { generateProductsFromManifest } from './productManifest';
 import { ensureProfessionalDescription, ensureProfessionalFabricDetails, polishProductCopy } from '../formatProductCopy';
 
+import 'server-only';
 // MongoDB connection
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/90s-store';
+
+type ClientTokenDoc = ClientTokenRecord & { _id?: ObjectId };
+
+type CreateClientTokenParams = {
+  sku: string;
+  productId?: string;
+  productCode?: string;
+  variantId?: string;
+  quantity: number;
+  color: string;
+  size: string;
+  client: ClientTokenContact;
+  productSnapshot?: ClientTokenSnapshot;
+};
+
+function trimString(value: unknown): string {
+  return typeof value === 'string' ? value.trim() : '';
+}
+
+function trimOptional(value: unknown): string | undefined {
+  const trimmed = trimString(value);
+  return trimmed ? trimmed : undefined;
+}
+
+function normalizeContact(raw?: Partial<ClientTokenContact>): ClientTokenContact {
+  return {
+    name: trimString(raw?.name),
+    email: trimString(raw?.email),
+    phone: trimString(raw?.phone),
+    company: trimOptional(raw?.company),
+    address: trimString(raw?.address),
+    notes: trimOptional(raw?.notes)
+  };
+}
+
+function normalizeSnapshot(raw?: Partial<ClientTokenSnapshot>): ClientTokenSnapshot | undefined {
+  if (!raw) return undefined;
+  const snapshot: ClientTokenSnapshot = {
+    productTitle: trimOptional(raw.productTitle),
+    heroImage: trimOptional(raw.heroImage),
+    productSlug: trimOptional(raw.productSlug),
+    productCode: trimOptional(raw.productCode)
+  };
+  return Object.values(snapshot).some(Boolean) ? snapshot : undefined;
+}
+
+function composeTokenBase(sku: string, color: string, size: string, quantity: number): string {
+  const normalizedColor = color.replace(/\s+/g, '-').toLowerCase();
+  const normalizedSize = size.replace(/\s+/g, '-').toUpperCase();
+  return `${sku}:${normalizedColor}:${normalizedSize}:${quantity}`;
+}
+
+function createTokenWithSuffix(base: string): string {
+  const suffix = crypto.randomUUID().replace(/-/g, '').slice(0, 6).toUpperCase();
+  return `${base}#${suffix}`;
+}
 let client: MongoClient | null = null;
 let db: Db | null = null;
 
@@ -42,14 +106,15 @@ async function getCollections() {
   const database = await connectDB();
   return {
     products: database.collection<Product>('products'),
-    sales: database.collection<SalesSnapshot>('sales')
+    sales: database.collection<SalesSnapshot>('sales'),
+    clientTokens: database.collection<ClientTokenDoc>('clientTokens')
   };
 }
 
 // Initialize database with seed data
 export async function initializeDatabase() {
   try {
-    const { products, sales } = await getCollections();
+    const { products, sales, clientTokens } = await getCollections();
 
     // Check if products collection is empty
     const productCount = await products.countDocuments();
@@ -125,6 +190,13 @@ export async function initializeDatabase() {
       await sales.insertMany(salesToInsert);
       await sales.createIndex({ date: 1 }, { unique: true });
       console.log('✅ Inserted sales data');
+    }
+
+    try {
+      await clientTokens.createIndex({ token: 1 }, { unique: true, name: 'client_token_unique' });
+      await clientTokens.createIndex({ sku: 1 }, { name: 'client_token_sku_idx' });
+    } catch (indexError) {
+      console.warn('Client token index setup warning:', indexError);
     }
 
     console.log('✅ Database initialized successfully!');
@@ -299,6 +371,78 @@ export async function getProductBySKU(sku: string): Promise<Product | null> {
     return product ? polishProductCopy(product) : null;
   } catch (error) {
     console.error('Error getting product by SKU:', error);
+    return null;
+  }
+}
+
+export async function createClientTokenRecord(params: CreateClientTokenParams): Promise<ClientTokenRecord> {
+  const sku = trimString(params.sku);
+  const quantity = Number.isFinite(params.quantity) ? Number(params.quantity) : 0;
+  if (!sku) {
+    throw new Error('SKU is required to create a client token');
+  }
+  if (quantity <= 0) {
+    throw new Error('Quantity must be greater than zero');
+  }
+
+  const client = normalizeContact(params.client);
+  if (!client.name || !client.email || !client.phone || !client.address) {
+    throw new Error('Client name, email, phone, and address are required');
+  }
+
+  const color = trimString(params.color) || 'unspecified';
+  const size = trimString(params.size) || 'unsized';
+  const base = composeTokenBase(sku, color, size, quantity);
+  const productSnapshot = normalizeSnapshot(params.productSnapshot);
+
+  const { clientTokens } = await getCollections();
+  const now = new Date().toISOString();
+
+  for (let attempt = 0; attempt < 6; attempt += 1) {
+    const token = createTokenWithSuffix(base);
+    const record: ClientTokenRecord = {
+      token,
+      sku,
+      productId: trimOptional(params.productId),
+      productCode: trimOptional(params.productCode),
+      variantId: trimOptional(params.variantId),
+      quantity,
+      color,
+      size,
+      client,
+      productSnapshot,
+      createdAt: now,
+      updatedAt: now
+    };
+
+    try {
+      await clientTokens.insertOne(record as ClientTokenDoc);
+      return record;
+    } catch (error: any) {
+      if (error?.code === 11000) {
+        continue;
+      }
+      console.error('Error storing client token:', error);
+      throw error;
+    }
+  }
+
+  throw new Error('Unable to allocate a unique token');
+}
+
+export async function getClientTokenRecord(token: string): Promise<ClientTokenRecord | null> {
+  const safeToken = trimString(token);
+  if (!safeToken) return null;
+  try {
+    const { clientTokens } = await getCollections();
+    const doc = await clientTokens.findOne({ token: safeToken });
+    if (!doc) return null;
+    const { _id, ...record } = doc;
+    const updatedAt = new Date().toISOString();
+    await clientTokens.updateOne({ token: safeToken }, { $set: { updatedAt } });
+    return { ...record, updatedAt };
+  } catch (error) {
+    console.error('Error reading client token record:', error);
     return null;
   }
 }
