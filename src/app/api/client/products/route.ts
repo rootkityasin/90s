@@ -6,9 +6,11 @@ export const dynamic = 'force-dynamic';
 // GET - List all products (client view - tokens instead of prices)
 export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url);
-    const productCode = searchParams.get('productCode');
-    const sku = searchParams.get('sku');
+  const { searchParams } = new URL(request.url);
+  const productCode = searchParams.get('productCode');
+  const sku = searchParams.get('sku');
+  const limitParam = searchParams.get('limit');
+  const offsetParam = searchParams.get('offset');
     
     if (productCode) {
       // Get single product by productCode
@@ -31,7 +33,10 @@ export async function GET(request: NextRequest) {
         }))
       };
       
-      return NextResponse.json({ success: true, product: productWithTokens }, { status: 200 });
+      return NextResponse.json({ success: true, product: productWithTokens }, {
+        status: 200,
+        headers: { 'Cache-Control': 'public, max-age=30, s-maxage=60, stale-while-revalidate=180' }
+      });
     }
     
     if (sku) {
@@ -51,7 +56,10 @@ export async function GET(request: NextRequest) {
         success: true, 
         product,
         variant: variant ? { ...variant, token: generateClientToken(variant.sku) } : null
-      }, { status: 200 });
+      }, {
+        status: 200,
+        headers: { 'Cache-Control': 'public, max-age=30, s-maxage=60, stale-while-revalidate=180' }
+      });
     }
     
     // Get all client products
@@ -73,7 +81,7 @@ export async function GET(request: NextRequest) {
     const category = searchParams.get('category');
     const search = searchParams.get('search');
     
-    let filtered = products;
+  let filtered = products;
     
     if (category && category !== 'all') {
       filtered = filtered.filter(p => p.category === category);
@@ -89,7 +97,15 @@ export async function GET(request: NextRequest) {
     }
     
     // Add tokens to all variants for client view
-    const productsWithTokens = filtered.map(p => ({
+    const total = filtered.length;
+    const limitRaw = limitParam ? Number.parseInt(limitParam, 10) : undefined;
+    const offsetRaw = offsetParam ? Number.parseInt(offsetParam, 10) : undefined;
+    const safeLimit = typeof limitRaw === 'number' && Number.isFinite(limitRaw) && limitRaw > 0 ? Math.min(limitRaw, 100) : undefined;
+    const safeOffset = typeof offsetRaw === 'number' && Number.isFinite(offsetRaw) && offsetRaw > 0 ? offsetRaw : 0;
+
+    const paginated = safeLimit ? filtered.slice(safeOffset, safeOffset + safeLimit) : filtered;
+
+    const productsWithTokens = paginated.map(p => ({
       ...p,
       variants: p.variants.map(v => ({
         ...v,
@@ -100,11 +116,17 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       success: true,
       products: productsWithTokens,
-      total: filtered.length,
+      total,
+      returned: productsWithTokens.length,
+      limit: safeLimit ?? null,
+      offset: safeOffset,
       categories: categoriesAll,
       subCategories: subCategoriesAll,
       categoryTree
-    }, { status: 200 });
+    }, {
+      status: 200,
+      headers: { 'Cache-Control': 'public, max-age=30, s-maxage=60, stale-while-revalidate=180' }
+    });
   } catch (error: any) {
     console.error('Client products error:', error);
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });

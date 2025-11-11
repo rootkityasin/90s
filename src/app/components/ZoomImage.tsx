@@ -13,11 +13,13 @@ type ZoomImageProps = {
   noZoom?: boolean; // if true, disable hover zoom
   fit?: 'cover' | 'contain'; // how the image should fit inside container
   background?: string; // container background color
+  loading?: 'lazy' | 'eager';
+  decoding?: 'auto' | 'async' | 'sync';
 };
 
 // Hover to zoom image. Moves focal point based on cursor position.
 // Disabled automatically on touch / coarse pointers.
-export function ZoomImage({ src, alt, height = 160, aspectRatio, radius = 8, zoomScale = 2.2, className, style, noZoom, fit = 'cover', background = '#111' }: ZoomImageProps) {
+export function ZoomImage({ src, alt, height = 160, aspectRatio, radius = 8, zoomScale = 2.2, className, style, noZoom, fit = 'cover', background = '#111', loading = 'lazy', decoding = 'async' }: ZoomImageProps) {
   const ref = React.useRef<HTMLDivElement | null>(null);
   const [origin, setOrigin] = React.useState('center center');
   const [hover, setHover] = React.useState(false);
@@ -162,7 +164,14 @@ export function ZoomImage({ src, alt, height = 160, aspectRatio, radius = 8, zoo
       onTouchMove={noZoom ? undefined : onTouchMove}
     >
       {/* plain img for now (could migrate to next/image) */}
-      <img src={src} alt={alt} style={imgStyle} draggable={false} />
+      <img
+        src={src}
+        alt={alt}
+        style={imgStyle}
+        draggable={false}
+        loading={loading}
+        decoding={decoding}
+      />
     </div>
   );
 }

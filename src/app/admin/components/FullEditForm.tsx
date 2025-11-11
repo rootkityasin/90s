@@ -8,7 +8,15 @@ import { useRouter } from 'next/navigation';
 export default function FullEditForm({ product, onClose }: { product: Product; onClose?: () => void }) {
   const router = useRouter();
   const [variants, setVariants] = useState<Variant[]>(product.variants);
-  const [images, setImages] = useState<string[]>(product.images || []);
+  const [images, setImages] = useState<string[]>(() => {
+    const list = product.images || [];
+    if (!product.heroImage) return [...list];
+    if (!list.length) return [product.heroImage];
+    if (list[0] === product.heroImage) return [...list];
+    if (!list.includes(product.heroImage)) return [product.heroImage, ...list];
+    return [product.heroImage, ...list.filter(img => img !== product.heroImage)];
+  });
+  const [heroImage, setHeroImage] = useState<string>(product.heroImage || (product.images?.[0] ?? ''));
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [productCode, setProductCode] = useState(product.productCode || '');
@@ -46,9 +54,21 @@ export default function FullEditForm({ product, onClose }: { product: Product; o
     const target = images[idx];
     // move selected to front and update hero input manually
     setImages(imgs => [target, ...imgs.filter((_,i)=>i!==idx)]);
-    const heroInput = document.querySelector<HTMLInputElement>('input[name="heroImage"]');
-    if (heroInput) heroInput.value = target;
+    setHeroImage(target);
   }
+  React.useEffect(() => {
+    if (images.length === 0) {
+      if (heroImage !== '') {
+        setHeroImage('');
+      }
+      return;
+    }
+
+    if (!heroImage || !images.includes(heroImage)) {
+      setHeroImage(images[0]);
+    }
+  }, [images, heroImage]);
+
 
   const addVariant = () => {
     const newIndex = variants.length;
@@ -153,7 +173,7 @@ export default function FullEditForm({ product, onClose }: { product: Product; o
         <label style={fieldLabelStyle}><span className="flab">Category</span><input name="category" defaultValue={product.category} required style={inputBoxStyle} /></label>
   <label style={fieldLabelStyle}><span className="flab">Subcategory</span><input name="subCategory" defaultValue={product.subCategory || ''} style={inputBoxStyle} placeholder="e.g. Baggy" /></label>
   <label style={fieldLabelStyle}><span className="flab">Product Code</span><input name="productCode" defaultValue={product.productCode || ''} style={inputBoxStyle} placeholder="Short code e.g. TRS-01" /></label>
-        <label style={fieldLabelStyle}><span className="flab">Hero Image (Auto)</span><input name="heroImage" defaultValue={product.heroImage} required style={{ ...inputBoxStyle, background: '#f5f5f5', cursor: 'not-allowed' }} readOnly /></label>
+  <label style={fieldLabelStyle}><span className="flab">Hero Image (Auto)</span><input name="heroImage" value={heroImage} required style={{ ...inputBoxStyle, background: '#f5f5f5', cursor: 'not-allowed' }} readOnly /></label>
         <label style={{ ...fieldLabelStyle, gridColumn:'1 / -1' }}><span className="flab">Description</span><textarea name="description" rows={3} defaultValue={product.description} style={{ ...inputBoxStyle, resize:'vertical' }} /></label>
         <label style={{ ...fieldLabelStyle, gridColumn:'1 / -1' }}><span className="flab">Fabric Details *</span><textarea name="fabricDetails" rows={2} defaultValue={product.fabricDetails} style={{ ...inputBoxStyle, resize:'vertical' }} required /></label>
         <label style={{ ...fieldLabelStyle, gridColumn:'1 / -1' }}><span className="flab">Care Instructions</span><textarea name="careInstructions" rows={2} defaultValue={product.careInstructions} style={{ ...inputBoxStyle, resize:'vertical' }} /></label>

@@ -90,6 +90,8 @@ export function ClientHero() {
           <img
             src="https://images.unsplash.com/photo-1512436991641-6745cdb1723f?w=800"
             alt="Vintage clothing on a rack"
+            loading="lazy"
+            decoding="async"
           />
         </div>
         <div className="social-row">

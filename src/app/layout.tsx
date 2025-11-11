@@ -35,6 +35,13 @@ export default function RootLayout({
 
   return (
     <html lang="en">
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link rel="preload" as="image" href="/assets/textures/home-hero.jpg" />
+        <link rel="preload" as="image" href="/assets/textures/paper.webp" type="image/webp" />
+        <link rel="preload" as="image" href="/assets/textures/detailed_grunge_texture_background_3012.jpg" />
+      </head>
       <BodyWrapper>
         <CartProvider>
           <NavBar role={role} clientAccess={clientAccess} />

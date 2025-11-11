@@ -8,6 +8,7 @@ export default function ClientAccess() {
   const [pending, setPending] = React.useState(false);
   const [checked, setChecked] = React.useState(false);
   const [authenticated, setAuthenticated] = React.useState(false);
+  const prefetchTriggeredRef = React.useRef(false);
 
   React.useEffect(() => {
     let active = true;
@@ -20,6 +21,54 @@ export default function ClientAccess() {
       .finally(() => { if (active) setChecked(true); });
     return () => { active = false; };
   }, []);
+
+  React.useEffect(() => {
+    if (!authenticated) {
+      prefetchTriggeredRef.current = false;
+    }
+  }, [authenticated]);
+
+  React.useEffect(() => {
+    if (!authenticated || prefetchTriggeredRef.current) return;
+    prefetchTriggeredRef.current = true;
+    let cancelled = false;
+    (async () => {
+      try {
+        const catalogRes = await fetch('/client/catalog', { method: 'GET', cache: 'no-store' });
+        if (!cancelled && catalogRes.ok) {
+          await catalogRes.text();
+        }
+        if (cancelled) return;
+        const productsRes = await fetch('/api/client/products?limit=10', { method: 'GET', cache: 'no-store' });
+        if (!productsRes.ok) return;
+        const data = await productsRes.json();
+        if (!cancelled && data?.success && Array.isArray(data.products)) {
+          const productCodes: string[] = [];
+          for (const product of data.products) {
+            if (product?.productCode) {
+              productCodes.push(product.productCode);
+            }
+          }
+          for (const code of productCodes) {
+            if (cancelled) break;
+            try {
+              const detailRes = await fetch(`/client/product/${encodeURIComponent(code)}`, { method: 'GET', cache: 'no-store' });
+              if (!detailRes.ok) continue;
+              await detailRes.text();
+            } catch (detailError) {
+              if (!cancelled) console.warn('Prefetch product page error:', code, detailError);
+            }
+          }
+        }
+      } catch (error) {
+        if (!cancelled) {
+          console.warn('Sequential prefetch error:', error);
+        }
+      }
+    })();
+
+    return () => { cancelled = true; };
+  }, [authenticated]);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();

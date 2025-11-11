@@ -2,7 +2,7 @@ import { ProductsPage } from '../../components';
 import { enforceClientAccess } from '../../../lib/auth/enforceClientAccess';
 import { listProductsByBase } from '../../../lib/data/store';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 60;
 
 export default async function ClientCatalog() {
   enforceClientAccess('/client/catalog');

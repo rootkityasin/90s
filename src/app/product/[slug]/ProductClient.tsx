@@ -41,6 +41,7 @@ export default function ProductClient({ product, isClient }: { product: Product;
   const [orderSubmitted, setOrderSubmitted] = React.useState(false);
   const [submittedOrder, setSubmittedOrder] = React.useState<OrderDetails | null>(null);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const [modalMounted, setModalMounted] = React.useState(false);
 
   const variant = p.variants[variantIndex];
   
@@ -48,6 +49,7 @@ export default function ProductClient({ product, isClient }: { product: Product;
   function handleAdd() { add(p, variant, qty); }
 
   function openOrderForm() {
+    if (!modalMounted) setModalMounted(true);
     setShowOrderForm(true);
     setGeneratedToken(null);
     setOrderSubmitted(false);
@@ -195,23 +197,25 @@ export default function ProductClient({ product, isClient }: { product: Product;
           fit="contain"
           background="#e9dfcf"
           style={{ boxShadow:'0 6px 18px -8px rgba(0,0,0,.4)' }}
+          loading="eager"
+          decoding="sync"
         />
         {p.images && p.images.length > 1 && (
           <div style={{ display:'flex', gap:'.4rem', marginTop:'.6rem', flexWrap:'wrap' }}>
             {p.images.slice(0,8).map(img => (
               <button key={img} onClick={()=>setActiveImg(img)} style={{ padding:0, border:'2px solid '+(img===activeImg?'var(--color-accent)':'#222'), background:'transparent', borderRadius:10, cursor:'pointer' }}>
-                <img src={img} alt='' style={{ width:54, height:54, objectFit:'cover', display:'block', borderRadius:8 }} />
+                <img src={img} alt='' loading="lazy" decoding="async" style={{ width:54, height:54, objectFit:'cover', display:'block', borderRadius:8 }} />
               </button>
             ))}
           </div>
         )}
       </div>
       <div style={{ flex:1, minWidth:300 }}>
-        <h1 className='header-accent rooster-font' style={{ marginTop:0 }}>{p.title}</h1>
+  <h1 className='header-accent jackport-font' style={{ marginTop:0 }}>{p.title}</h1>
   <p style={{ fontSize:'.62rem', letterSpacing:'.8px', margin:'0 0 .8rem', color:'var(--color-accent)' }}>{categoryLabel}</p>
     <p style={{ fontSize:'.65rem', letterSpacing:'.1em', textTransform:'uppercase', margin:'-.4rem 0 1rem', opacity:.7 }}>Product Code: {productCode}</p>
         {p.description?.trim() && (
-          <p style={{ fontSize:'.8rem', lineHeight:1.45 }}>{p.description}</p>
+          <p style={{ fontSize:'.8rem', lineHeight:1.45, fontFamily:'var(--font-body)', letterSpacing:'.01em' }}>{p.description}</p>
         )}
         <div style={{ background:'var(--color-surface)', padding:'1rem 1.1rem', borderRadius:16, margin:'1rem 0', fontSize:'.65rem', letterSpacing:'.5px', lineHeight:1.4 }}>
           <strong style={{ fontSize:'.7rem' }}>FABRIC & DETAILS</strong><br />
@@ -275,23 +279,31 @@ export default function ProductClient({ product, isClient }: { product: Product;
               </div>
             )}
 
-            {showOrderForm && (
-              <div style={modalOverlayStyle} onClick={closeOrderForm}>
-                <div style={modalCardStyle} className="client-token-modal" onClick={e => e.stopPropagation()}>
-                  <button
-                    type="button"
-                    onClick={closeOrderForm}
-                    style={modalCloseButtonStyle}
-                    aria-label="Close order details form"
-                  >
-                    ×
-                  </button>
-                  <h2 style={{ margin: '0 0 1rem', fontSize: '1.25rem', letterSpacing: '.6px' }}>Share details to lock your token</h2>
-                  <p style={{ margin: '0 0 1.4rem', fontSize: '.72rem', lineHeight: 1.55, color: 'rgba(248,245,235,0.9)' }}>
-                    Provide the essentials so our sourcing team can reference this SKU token and follow up quickly with samples, pricing, or contracts.
-                  </p>
-                  {formError && <p style={{ ...errorTextStyle, color: '#ffb4a2', marginBottom: '.75rem' }}>{formError}</p>}
-                  <form onSubmit={handleOrderSubmit} style={formLayoutStyle}>
+            {modalMounted && (
+              <div
+                style={showOrderForm ? modalOverlayStyle : modalOverlayHiddenStyle}
+                onClick={showOrderForm ? closeOrderForm : undefined}
+                aria-hidden={!showOrderForm}
+              >
+                <div
+                  style={showOrderForm ? modalCardStyle : modalCardHiddenStyle}
+                  className="client-token-modal"
+                  onClick={e => e.stopPropagation()}
+                >
+                    <button
+                      type="button"
+                      onClick={closeOrderForm}
+                      style={modalCloseButtonStyle}
+                      aria-label="Close order details form"
+                    >
+                      ×
+                    </button>
+                    <h2 style={{ margin: '0 0 .8rem', fontSize: '1.25rem', letterSpacing: '.6px' }}>Share details to lock your token</h2>
+                    <p style={{ margin: '0 0 1rem', fontSize: '.72rem', lineHeight: 1.48, color: 'rgba(248,245,235,0.9)' }}>
+                      Provide the essentials so our sourcing team can reference this SKU token and follow up quickly with samples, pricing, or contracts.
+                    </p>
+                    {formError && <p style={{ ...errorTextStyle, color: '#ffb4a2', marginBottom: '.6rem' }}>{formError}</p>}
+                    <form onSubmit={handleOrderSubmit} style={formLayoutStyle}>
                     <div style={formGroupStyle}>
                       <label style={modalLabelStyle}>Full Name<span style={{ color: '#fdd6ba', marginLeft: 4 }}>*</span></label>
                       <input
@@ -356,7 +368,7 @@ export default function ProductClient({ product, isClient }: { product: Product;
                         placeholder="Fabric preference, timeline, extra context (optional)"
                       />
                     </div>
-                    <div style={{ display: 'flex', gap: '.75rem', flexWrap: 'wrap', marginTop: '1.4rem' }}>
+                    <div style={{ display: 'flex', gap: '.75rem', flexWrap: 'wrap', marginTop: '1.1rem' }}>
                       <button type="submit" disabled={isSubmitting}>
                         {isSubmitting ? 'Generating…' : 'Submit & Generate Token'}
                       </button>
@@ -396,7 +408,29 @@ const errorTextStyle: React.CSSProperties = { fontSize:'.65rem', margin:'0 0 .6r
 const successCardStyle: React.CSSProperties = { marginTop:'1.2rem', padding:'1.25rem 1.4rem', borderRadius:16, background:'rgba(15,22,40,0.98)', border:'1px solid rgba(122,2,2,0.35)', color:'#f7f7f7', boxShadow:'0 24px 42px -26px rgba(0,0,0,.7)' };
 const detailsGridStyle: React.CSSProperties = { margin:0, display:'grid', gridTemplateColumns:'auto 1fr', columnGap:'.75rem', rowGap:'.35rem', fontSize:'.68rem', letterSpacing:'.05em' };
 const tokenInputStyle: React.CSSProperties = { ...selectStyle, flex:1, padding:'0.8rem', paddingRight:'2.5rem', background:'#111' };
-const modalOverlayStyle: React.CSSProperties = { position:'fixed', inset:0, background:'rgba(0,0,0,.55)', backdropFilter:'blur(4px)', display:'flex', alignItems:'flex-start', justifyContent:'center', overflowY:'auto', padding:'4rem 1rem', zIndex:240 };
+const modalOverlayStyle: React.CSSProperties = {
+  position:'fixed',
+  inset:0,
+  background:'rgba(0,0,0,.55)',
+  backdropFilter:'blur(4px)',
+  display:'flex',
+  alignItems:'flex-start',
+  justifyContent:'center',
+  overflowY:'auto',
+  padding:'4rem 1rem',
+  zIndex:240,
+  opacity: 1,
+  visibility: 'visible',
+  transition: 'opacity .24s ease, visibility .24s ease'
+};
+
+const modalOverlayHiddenStyle: React.CSSProperties = {
+  ...modalOverlayStyle,
+  opacity: 0,
+  visibility: 'hidden',
+  pointerEvents: 'none'
+};
+
 const modalCardStyle: React.CSSProperties = {
   padding: '2.2rem 2.4rem 2rem',
   borderRadius: 26,
@@ -404,7 +438,16 @@ const modalCardStyle: React.CSSProperties = {
   position: 'relative',
   boxShadow: '0 40px 80px -45px rgba(0,0,0,.85)',
   border: '1px solid rgba(120,86,52,0.18)',
-  overflow: 'hidden'
+  overflow: 'hidden',
+  transform: 'translateY(0) scale(1)',
+  opacity: 1,
+  transition: 'transform .24s cubic-bezier(.22,.68,0,1), opacity .24s ease'
+};
+
+const modalCardHiddenStyle: React.CSSProperties = {
+  ...modalCardStyle,
+  transform: 'translateY(16px) scale(.96)',
+  opacity: 0
 };
 const modalCloseButtonStyle: React.CSSProperties = { position:'absolute', top:12, right:14, background:'#214c50', color:'#f4f1e8', border:'none', borderRadius:'50%', width:40, height:40, display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', boxShadow:'0 18px 34px -18px rgba(12,35,40,0.55)', fontSize:'1.25rem', fontWeight:600, lineHeight:1 };
 const formLayoutStyle: React.CSSProperties = { display:'flex', flexDirection:'column', gap:'.65rem' };

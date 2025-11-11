@@ -4,11 +4,10 @@
 @font-face { font-family: 'CaxtonLtBT'; src: local('Caxton Lt BT'), local('CaxtonLtBT'); font-weight:400; }
 @font-face { font-family: 'Minggola'; src: local('Minggola'); font-weight:400; }
 @font-face {
-  font-family: 'Rooster';
+  font-family: 'JackportCollege';
   src:
-    local('Rooster Personal Use'),
-    local('Rooster'),
-    url('/assets/fonts/ROOSTER%20PERSONAL%20USE.ttf') format('truetype');
+    local('Jackport College NCV'),
+    url('/assets/fonts/JackportCollegeNcv-1MZe.ttf') format('truetype');
   font-weight: normal;
   font-style: normal;
 }
@@ -33,10 +32,14 @@
 html, body { margin:0; padding:0; font-family: var(--font-body); background:#5b745f; color: var(--color-text); -webkit-font-smoothing:antialiased; }
 
 .product-title-font { font-family: var(--font-product-title) !important; font-weight:600; letter-spacing:.01em; }
-.rooster-font {
-  font-family: 'Rooster', 'Great Vibes', 'Sail', cursive !important;
-  font-weight: 600;
-  letter-spacing: .01em;
+.jackport-font {
+  font-family: 'JackportCollege', 'Bebas Neue', sans-serif !important;
+  font-weight: 400;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  display: inline-block;
+  color: #1b0e01 !important;
+  text-shadow: none !important;
 }
 
 .home-hero {

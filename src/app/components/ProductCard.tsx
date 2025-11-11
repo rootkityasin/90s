@@ -7,7 +7,7 @@ import { ZoomImage } from './ZoomImage';
 import { useCart } from './cart/CartContext';
 import { formatCategoryLabel } from '../../lib/formatCategoryLabel';
 
-export function ProductCard({ p, showPrice, token }: { p: Product; showPrice: boolean; token?: string }) {
+export const ProductCard = React.memo(function ProductCard({ p, showPrice, token }: { p: Product; showPrice: boolean; token?: string }) {
   const { add } = useCart();
   const firstVariant = p.variants[0];
   // Use productCode for routing (folder is [slug] but param is treated as productCode)
@@ -17,12 +17,17 @@ export function ProductCard({ p, showPrice, token }: { p: Product; showPrice: bo
   const blurb = p.description?.trim() || 'View product for full details';
   const productCode = (p.productCode && p.productCode.trim()) || p.slug.toUpperCase().replace(/[^A-Z0-9]+/g,'').slice(0,12);
   const [frameColor, setFrameColor] = React.useState<string>('#f1e8da');
+  const heroSrc = p.heroImage || p.images?.[0] || '';
 
   React.useEffect(() => {
     let cancelled = false;
+    if (!heroSrc) {
+      setFrameColor('#f1e8da');
+      return () => { cancelled = true; };
+    }
     const img = new Image();
     img.crossOrigin = 'anonymous';
-    img.src = p.heroImage;
+    img.src = heroSrc;
 
     const handleLoad = () => {
       try {
@@ -72,7 +77,7 @@ export function ProductCard({ p, showPrice, token }: { p: Product; showPrice: bo
     return () => {
       cancelled = true;
     };
-  }, [p.heroImage]);
+  }, [heroSrc]);
   function handleAdd(e: React.MouseEvent) {
     e.preventDefault();
     e.stopPropagation();
@@ -105,7 +110,7 @@ export function ProductCard({ p, showPrice, token }: { p: Product; showPrice: bo
   {/* Framed product visual */}
   <div className="pc-image" style={{ position: 'relative', minHeight: 0, margin: 0, background: frameColor, marginBottom: '.5rem' }}>
           <ZoomImage
-            src={p.heroImage}
+            src={heroSrc}
             alt={p.title}
             height={325}
             noZoom
@@ -185,5 +190,7 @@ export function ProductCard({ p, showPrice, token }: { p: Product; showPrice: bo
       </motion.div>
     </Link>
   );
-}
+});
+
+ProductCard.displayName = 'ProductCard';
 

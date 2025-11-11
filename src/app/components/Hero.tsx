@@ -7,11 +7,11 @@ const item = { hidden:{ opacity:0, y:30, filter:'blur(6px)' }, show:{ opacity:1,
 
 const heroLead = {
   label:'MEN +',
-  price:'Tk 800',
+  price:'Tk 1400',
   title:'Workwear Season',
   ctaLabel:'Shop Now',
   ctaHref:'/retail?category=cargos',
-  image:'/photoshoot/temp.jpg',
+  image:'/photoshoot/main_model.png',
   alt:'Workwear season look in camel jacket'
 };
 
