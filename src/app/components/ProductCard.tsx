@@ -10,14 +10,17 @@ import { formatCategoryLabel } from '../../lib/formatCategoryLabel';
 export const ProductCard = React.memo(function ProductCard({ p, showPrice, token }: { p: Product; showPrice: boolean; token?: string }) {
   const { add } = useCart();
   const firstVariant = p.variants[0];
+  const priceBDT = firstVariant?.retailPriceBDT ?? null;
   // Use productCode for routing (folder is [slug] but param is treated as productCode)
   const productIdentifier = p.productCode || p.slug;
-  const href = showPrice ? `/product/${productIdentifier}` : `/client/product/${productIdentifier}`;
+  const encodedIdentifier = encodeURIComponent(productIdentifier);
+  const href = showPrice ? `/product/${encodedIdentifier}` : `/client/product/${encodedIdentifier}`;
   const formattedCategory = formatCategoryLabel(p.category, p.subCategory);
   const blurb = p.description?.trim() || 'View product for full details';
   const productCode = (p.productCode && p.productCode.trim()) || p.slug.toUpperCase().replace(/[^A-Z0-9]+/g,'').slice(0,12);
   const [frameColor, setFrameColor] = React.useState<string>('#f1e8da');
   const heroSrc = p.heroImage || p.images?.[0] || '';
+  const cardHeight = showPrice ? 460 : 420;
 
   React.useEffect(() => {
     let cancelled = false;
@@ -81,7 +84,8 @@ export const ProductCard = React.memo(function ProductCard({ p, showPrice, token
   function handleAdd(e: React.MouseEvent) {
     e.preventDefault();
     e.stopPropagation();
-    if (firstVariant) add(p, firstVariant, 1);
+  if (!firstVariant) return;
+  add(p, firstVariant, 1);
   }
   
   // One-line subtle subtitle under title (no separate description box)
@@ -100,7 +104,9 @@ export const ProductCard = React.memo(function ProductCard({ p, showPrice, token
         transition={{ duration: .55, ease: [0.22, 0.68, 0, 1] }}
         role="group"
         style={{
-          height: '380px',
+          height: `${cardHeight}px`,
+          minHeight: `${cardHeight}px`,
+          maxHeight: `${cardHeight}px`,
           display: 'flex',
           flexDirection: 'column',
           cursor: 'pointer',
@@ -142,7 +148,12 @@ export const ProductCard = React.memo(function ProductCard({ p, showPrice, token
             style={{
               margin: '0 0 .18rem',
               fontSize: '.64rem',
-              color: 'rgba(0,0,0,0.55)'
+              color: 'rgba(0,0,0,0.6)',
+              display: '-webkit-box',
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: 'vertical',
+              overflow: 'hidden',
+              minHeight: '1.6rem'
             }}
           >
             {shortSubtitle}
@@ -166,7 +177,7 @@ export const ProductCard = React.memo(function ProductCard({ p, showPrice, token
         {/* Price or token information */}
         {showPrice ? (
           <div style={{ display: 'flex', alignItems: 'center', gap: '.6rem', marginTop: 'auto', paddingTop: '.4rem' }}>
-            <div className="card-price" style={{ fontWeight: 800, fontSize: '1.8rem', color: '#7a0202' }}>৳{firstVariant.retailPriceBDT}</div>
+            <div className="card-price" style={{ fontWeight: 800, fontSize: '1.8rem', color: '#7a0202' }}>৳{priceBDT !== null ? priceBDT : '--'}</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '.25rem' }}>
               <div style={{ color: '#7a0202', letterSpacing: '.15rem' }}>★★★★☆</div>
               <div style={{ fontSize: '.6rem', color: 'rgba(0,0,0,.55)' }}>Discount 50%</div>
@@ -181,7 +192,9 @@ export const ProductCard = React.memo(function ProductCard({ p, showPrice, token
         {showPrice && (
           <button
             className="add-to-cart-bar"
+            type="button"
             onClick={handleAdd}
+            disabled={!firstVariant}
             aria-label="Add to cart"
           >
             ADD TO CART

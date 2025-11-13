@@ -18,7 +18,14 @@ type ProductsPageProps = {
 
 // Simple wrapper component that handles fetching + layout + animations
 export function ProductsPage({ title, description, mode, productsInitial = [] }: ProductsPageProps) {
-  const [rawProducts, setRawProducts] = React.useState<Product[]>(productsInitial || []);
+  const initialProducts = React.useMemo(
+    () => (productsInitial || []).filter((product) => product.base === mode),
+    [productsInitial, mode]
+  );
+  const [rawProducts, setRawProducts] = React.useState<Product[]>(initialProducts);
+  React.useEffect(() => {
+    setRawProducts(initialProducts);
+  }, [initialProducts]);
   // realtime subscription (SSE)
   React.useEffect(() => {
     const ev = new EventSource('/api/realtime-products');
@@ -28,10 +35,13 @@ export function ProductsPage({ title, description, mode, productsInitial = [] }:
         // Only add/update if it matches the current base (retail or client)
         if (updated.base !== mode) return;
         setRawProducts(prev => {
-          const idx = prev.findIndex(p => p.id === updated.id);
-          if (idx === -1) return prev; // ignore if not present (or push?)
-          const copy = prev.slice();
-            copy[idx] = updated;
+          const filteredPrev = prev.filter(item => item.base === mode);
+          const idx = filteredPrev.findIndex(p => p.id === updated.id);
+          if (idx === -1) {
+            return [updated, ...filteredPrev];
+          }
+          const copy = filteredPrev.slice();
+          copy[idx] = updated;
           return copy;
         });
       } catch {}
@@ -127,6 +137,7 @@ export function ProductsPage({ title, description, mode, productsInitial = [] }:
   }, [cat, categoryTree, allSubCategories]);
 
   const filtered = (rawProducts || []).filter(p => {
+    if (p.base !== mode) return false;
     if (cat !== 'all' && p.category !== cat) return false;
     if (subCat !== 'all' && p.subCategory !== subCat) return false;
     if (q) {
@@ -256,14 +267,18 @@ export function ProductsPage({ title, description, mode, productsInitial = [] }:
       )}
       <Stagger>
   <div className="grid product-grid" style={{ marginTop:'1.2rem' }}>
-      {products.slice(0, visible).map(p => (
+      {products.slice(0, visible).map(p => {
+        const primaryVariant = p.variants[0];
+        const clientToken = !showPrice && primaryVariant ? generateClientToken(primaryVariant.sku) : undefined;
+        return (
             <ProductCard
               key={p.id}
               p={p}
               showPrice={showPrice}
-              token={!showPrice ? generateClientToken(p.variants[0].sku) : undefined}
+              token={clientToken}
             />
-          ))}
+        );
+          })}
         </div>
       </Stagger>
     {/* Sentinel for infinite scroll (hidden, just for IntersectionObserver) */}

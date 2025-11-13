@@ -210,8 +210,13 @@ export default function ProductClient({ product, isClient }: { product: Product;
           </div>
         )}
       </div>
-      <div style={{ flex:1, minWidth:300 }}>
-  <h1 className='header-accent jackport-font' style={{ marginTop:0 }}>{p.title}</h1>
+    <div style={{ flex:1, minWidth:300 }}>
+    <h1
+      className='header-accent jackport-font'
+      style={{ marginTop: 0, fontFamily: "'JackportCollege','Bebas Neue',sans-serif" }}
+    >
+      {p.title}
+    </h1>
   <p style={{ fontSize:'.62rem', letterSpacing:'.8px', margin:'0 0 .8rem', color:'var(--color-accent)' }}>{categoryLabel}</p>
     <p style={{ fontSize:'.65rem', letterSpacing:'.1em', textTransform:'uppercase', margin:'-.4rem 0 1rem', opacity:.7 }}>Product Code: {productCode}</p>
         {p.description?.trim() && (

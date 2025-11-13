@@ -2,6 +2,7 @@ export type Variant = {
   id: string; // variant id
   sku: string;
   color: string;
+  colorHex?: string;
   size: string;
   retailPriceBDT: number; // base price in BDT
 };

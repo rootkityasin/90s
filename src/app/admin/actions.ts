@@ -44,10 +44,12 @@ export async function createProduct(formData: FormData) {
     const id = (formData.get(`variant_id_${i}`)||'').toString() || crypto.randomUUID();
     const sku = (formData.get(`variant_sku_${i}`)||'').toString();
     if(!sku) continue; // skip empty rows
+    const colorHex = (formData.get(`variant_color_hex_${i}`)||'').toString();
     variants.push({
       id,
       sku,
       color: (formData.get(`variant_color_${i}`)||'').toString(),
+      colorHex: colorHex || undefined,
       size: (formData.get(`variant_size_${i}`)||'').toString(),
       retailPriceBDT: parseInt((formData.get(`variant_price_${i}`)||'0').toString(),10) || 0
     });
@@ -167,10 +169,12 @@ export async function fullEditProduct(formData: FormData) {
       const id = (formData.get(`variant_id_${i}`)||'').toString() || crypto.randomUUID();
       const sku = (formData.get(`variant_sku_${i}`)||'').toString();
       if(!sku) continue;
+      const colorHex = (formData.get(`variant_color_hex_${i}`)||'').toString();
       variants.push({
         id,
         sku,
         color: (formData.get(`variant_color_${i}`)||'').toString(),
+        colorHex: colorHex || undefined,
         size: (formData.get(`variant_size_${i}`)||'').toString(),
         retailPriceBDT: parseInt((formData.get(`variant_price_${i}`)||'0').toString(),10) || 0
       });

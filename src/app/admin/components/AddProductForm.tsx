@@ -1,30 +1,53 @@
 "use client";
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import type { Variant } from '../../../lib/types';
 import { createProduct } from '../actions';
 import { useRouter } from 'next/navigation';
+import { colorNameToHex, findNearestColor, getAllColorNames } from '../../../lib/colors';
 
 export default function AddProductForm({ onClose }: { onClose?: () => void }) {
   const router = useRouter();
   const [variants, setVariants] = useState<Variant[]>([
-    { id: crypto.randomUUID(), sku:'', color:'', size:'', retailPriceBDT:0 }
+    { id: crypto.randomUUID(), sku:'', color:'', colorHex:'#000000', size:'', retailPriceBDT:0 }
   ]);
+  const [variantColorHexes, setVariantColorHexes] = useState<string[]>(['#000000']);
   const [images, setImages] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [productCode, setProductCode] = useState('');
+  const dragItemIndexRef = React.useRef<number | null>(null);
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
+  const [isDropActive, setIsDropActive] = useState(false);
 
-  // Color options
-  const colorOptions = ['Black', 'White', 'Gray', 'Navy', 'Khaki', 'Olive', 'Brown', 'Beige', 'Red', 'Blue', 'Green'];
+  const baseColorNames = useMemo(() => getAllColorNames(), []);
+  const colorOptions = useMemo(() => {
+    const names = new Set<string>(baseColorNames);
+    variants.forEach((variant) => {
+      if (variant.color) names.add(variant.color);
+    });
+    return Array.from(names).sort((a, b) => a.localeCompare(b));
+  }, [baseColorNames, variants]);
   
   // Size options
   const sizeOptions = ['XS', 'S', 'M', 'L', 'XL', 'XXL', '28', '30', '32', '34', '36', '38'];
 
+  React.useEffect(() => {
+    const heroInput = document.querySelector<HTMLInputElement>('input[name="heroImage"]');
+    if (heroInput) {
+      heroInput.value = images[0] || '';
+    }
+  }, [images]);
+
   // Auto-generate SKU when color or size changes
-  const updateVariantWithAutoSKU = (i: number, patch: Partial<Variant>) => {
+  const updateVariantWithAutoSKU = (i: number, patch: Partial<Variant>, options?: { colorHex?: string }) => {
     setVariants(v => v.map((vv, idx) => {
       if (idx !== i) return vv;
       const updated = { ...vv, ...patch };
+      if (options?.colorHex) {
+        updated.colorHex = options.colorHex;
+      } else if (patch.color !== undefined) {
+        updated.colorHex = colorNameToHex(patch.color) ?? vv.colorHex ?? '#000000';
+      }
       
       // Auto-generate SKU if productCode exists
       if (productCode && (patch.color !== undefined || patch.size !== undefined)) {
@@ -34,26 +57,110 @@ export default function AddProductForm({ onClose }: { onClose?: () => void }) {
       
       return updated;
     }));
+    if (options?.colorHex !== undefined || patch.color !== undefined) {
+      setVariantColorHexes(prev => {
+        const next = [...prev];
+        if (options?.colorHex !== undefined) {
+          next[i] = options.colorHex;
+        } else if (patch.color !== undefined) {
+          next[i] = colorNameToHex(patch.color) ?? next[i] ?? '#000000';
+        }
+        return next;
+      });
+    }
   };
+
+  const uploadImageFiles = React.useCallback(async (fileList: File[]) => {
+    const filtered = fileList.filter(file => file.type.startsWith('image/'));
+    if (!filtered.length) return;
+    setUploading(true);
+    const added: string[] = [];
+    try {
+      for (const file of filtered) {
+        const fd = new FormData();
+        fd.append('file', file);
+        const res = await fetch('/api/upload-image', { method: 'POST', body: fd });
+        if (res.ok) {
+          const json = await res.json();
+          if (json.path) added.push(json.path);
+        }
+      }
+      if (added.length) {
+        setImages(prev => [...prev, ...added]);
+      }
+    } finally {
+      setUploading(false);
+    }
+  }, []);
 
   async function handleUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const files = e.target.files;
     if (!files || !files.length) return;
-    setUploading(true);
-    const added: string[] = [];
-    for (const file of Array.from(files)) {
-      const fd = new FormData();
-      fd.append('file', file);
-      const res = await fetch('/api/upload-image', { method:'POST', body: fd });
-      if (res.ok) {
-        const json = await res.json();
-        if (json.path) added.push(json.path);
-      }
-    }
-    setImages(prev => [...prev, ...added]);
-    setUploading(false);
+    await uploadImageFiles(Array.from(files));
     e.target.value = '';
   }
+
+  const handleDropZone = async (event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    setIsDropActive(false);
+    if (uploading) return;
+    const files = Array.from(event.dataTransfer.files || []);
+    if (files.length) {
+      await uploadImageFiles(files);
+    }
+  };
+
+  const handleDragOverZone = (event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    if (!isDropActive) setIsDropActive(true);
+  };
+
+  const handleDragLeaveZone = (event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    const nextTarget = event.relatedTarget as Node | null;
+    if (nextTarget && event.currentTarget.contains(nextTarget)) return;
+    setIsDropActive(false);
+  };
+
+  const handleDragStartImage = (index: number) => () => {
+    dragItemIndexRef.current = index;
+  };
+
+  const handleDragOverImage = (index: number) => (event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    if (dragOverIndex !== index) {
+      setDragOverIndex(index);
+    }
+  };
+
+  const handleDragLeaveImage = (index: number) => () => {
+    if (dragOverIndex === index) {
+      setDragOverIndex(null);
+    }
+  };
+
+  const handleDropImage = (index: number) => (event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    const start = dragItemIndexRef.current;
+    if (start === null || start === index) {
+      dragItemIndexRef.current = null;
+      setDragOverIndex(null);
+      return;
+    }
+    setImages(prev => {
+      const next = [...prev];
+      const [moved] = next.splice(start, 1);
+      next.splice(index, 0, moved);
+      return next;
+    });
+    dragItemIndexRef.current = null;
+    setDragOverIndex(null);
+  };
+
+  const handleDragEndImage = () => {
+    dragItemIndexRef.current = null;
+    setDragOverIndex(null);
+  };
 
   function removeImage(idx: number) {
     setImages(imgs => imgs.filter((_,i)=>i!==idx));
@@ -71,12 +178,22 @@ export default function AddProductForm({ onClose }: { onClose?: () => void }) {
     const newIndex = variants.length;
     const suffix = newIndex === 0 ? '' : `-${newIndex + 1}`;
     const sku = productCode ? `${productCode.toUpperCase()}${suffix}` : '';
-    setVariants(v => [...v, { id: crypto.randomUUID(), sku, color:'', size:'', retailPriceBDT:0 }]);
+    setVariants(v => [...v, { id: crypto.randomUUID(), sku, color:'', colorHex:'#000000', size:'', retailPriceBDT:0 }]);
+    setVariantColorHexes(prev => [...prev, '#000000']);
   };
   const updateVariant = (i: number, patch: Partial<Variant>) => {
     setVariants(v => v.map((vv,idx) => idx===i? { ...vv, ...patch }: vv));
   };
-  const removeVariant = (i: number) => setVariants(v => v.filter((_,idx)=>idx!==i));
+  const removeVariant = (i: number) => {
+    setVariants(v => v.filter((_,idx)=>idx!==i));
+    setVariantColorHexes(prev => prev.filter((_, idx) => idx !== i));
+  };
+  const handleColorPickerChange = (index: number, hexValue: string) => {
+    const nearest = findNearestColor(hexValue);
+    updateVariantWithAutoSKU(index, { color: nearest.name }, { colorHex: hexValue });
+  };
+
+  const formatHexDisplay = (hex: string) => hex?.toUpperCase();
 
   const handleSubmit = async (formData: FormData) => {
     setSaving(true);
@@ -143,6 +260,28 @@ export default function AddProductForm({ onClose }: { onClose?: () => void }) {
         input[type="number"] {
           -moz-appearance: textfield;
         }
+        input[type="color"].color-circle-picker {
+          -webkit-appearance: none;
+          border: none;
+          padding: 0;
+          width: 36px;
+          height: 36px;
+          border-radius: 50%;
+          overflow: hidden;
+          cursor: pointer;
+          background: transparent;
+        }
+        input[type="color"].color-circle-picker::-webkit-color-swatch-wrapper {
+          padding: 0;
+        }
+        input[type="color"].color-circle-picker::-webkit-color-swatch {
+          border: none;
+          border-radius: 50%;
+        }
+        input[type="color"].color-circle-picker::-moz-color-swatch {
+          border: none;
+          border-radius: 50%;
+        }
       `}</style>
       <form action={handleSubmit} style={{ display:'flex', flexDirection:'column', gap:'1.2rem', maxWidth:1000 }}>
       <div style={{ display:'grid', gap:'.8rem', gridTemplateColumns:'repeat(auto-fit,minmax(180px,1fr))' }}>
@@ -184,7 +323,21 @@ export default function AddProductForm({ onClose }: { onClose?: () => void }) {
     <label style={{ ...fieldLabelStyle, gridColumn:'1 / -1' }}><span className="flab">Care Instructions</span><textarea name="careInstructions" rows={2} placeholder="Care: Machine wash cold inside out with like colours. Do not bleach. Tumble dry low or line dry. Warm iron on reverse if needed." style={{ ...inputBoxStyle, resize:'vertical' }} /></label>
       </div>
       
-      <div style={{ display:'grid', gap:'.75rem' }}>
+      <div
+        onDragEnter={handleDragOverZone}
+        onDragOver={handleDragOverZone}
+        onDragLeave={handleDragLeaveZone}
+        onDrop={handleDropZone}
+        style={{
+          display:'grid',
+          gap:'.75rem',
+          border: isDropActive ? '1px dashed #00a38a' : '1px dashed transparent',
+          borderRadius:12,
+          padding: isDropActive ? '.75rem' : 0,
+          background: isDropActive ? 'rgba(0,143,125,0.08)' : 'transparent',
+          transition:'background-color .2s ease, border-color .2s ease'
+        }}
+      >
         <div style={{ display:'flex', flexWrap:'wrap', gap:'.6rem', alignItems:'center' }}>
           <span style={{ fontSize:'.75rem', fontWeight:600 }}>Gallery Images</span>
           <label style={{ fontSize:'.6rem', cursor:'pointer', background:'#1e2b4f', color:'#fff', padding:'.35rem .6rem', borderRadius:6 }}>
@@ -196,7 +349,26 @@ export default function AddProductForm({ onClose }: { onClose?: () => void }) {
         {images.length === 0 && <p style={{ fontSize:'.65rem', opacity:.7 }}>No images yet. Use Upload Images to add product photos.</p>}
         <div style={{ display:'grid', gap:'.6rem', gridTemplateColumns:'repeat(auto-fill,minmax(140px,1fr))' }}>
           {images.map((img, idx) => (
-            <div key={img+idx} style={{ position:'relative', border:'1px solid #333', borderRadius:10, padding:6, background:'#101418', display:'flex', flexDirection:'column', gap:4 }}>
+            <div
+              key={img+idx}
+              draggable
+              onDragStart={handleDragStartImage(idx)}
+              onDragOver={handleDragOverImage(idx)}
+              onDragLeave={handleDragLeaveImage(idx)}
+              onDrop={handleDropImage(idx)}
+              onDragEnd={handleDragEndImage}
+              style={{
+                position:'relative',
+                border: dragOverIndex === idx ? '2px dashed #00a38a' : '1px solid #333',
+                borderRadius:10,
+                padding:6,
+                background:'#101418',
+                display:'flex',
+                flexDirection:'column',
+                gap:4,
+                cursor:'grab'
+              }}
+            >
               <div style={{ position:'relative' }}>
                 <img src={img} alt="" style={{ width:'100%', height:100, objectFit:'cover', borderRadius:6, boxShadow:'0 0 0 1px #222' }} />
                 {idx===0 && <span style={{ position:'absolute', top:6, left:6, background:'#008F7D', color:'#fff', fontSize:'.55rem', padding:'2px 5px', borderRadius:4, letterSpacing:.5 }}>HERO</span>}
@@ -251,13 +423,30 @@ export default function AddProductForm({ onClose }: { onClose?: () => void }) {
                 <select 
                   name={`variant_color_${i}`} 
                   value={v.color} 
-                  onChange={e=>updateVariantWithAutoSKU(i,{color:e.target.value})} 
+                  onChange={e => {
+                    const value = e.target.value;
+                    const derivedHex = value ? (colorNameToHex(value) ?? '#000000') : '#000000';
+                    updateVariantWithAutoSKU(i, { color: value }, { colorHex: derivedHex });
+                  }} 
                   style={inputBoxStyle}
                   required
                 >
                   <option value="">Choose color...</option>
                   {colorOptions.map(c => <option key={c} value={c}>{c}</option>)}
                 </select>
+                <div style={{ display:'flex', alignItems:'center', gap:'.45rem', marginTop:'.35rem' }}>
+                  <input
+                    type="color"
+                    className="color-circle-picker"
+                    value={variantColorHexes[i] || '#000000'}
+                    onChange={(event) => handleColorPickerChange(i, event.target.value)}
+                    title="Pick a custom color"
+                  />
+                  <span style={{ fontSize:'.58rem', color:'rgba(255,255,255,0.65)', letterSpacing:'.05em' }}>
+                    {formatHexDisplay(variantColorHexes[i] || '#000000')} - {v.color || 'Unset'}
+                  </span>
+                  <input type="hidden" name={`variant_color_hex_${i}`} value={variantColorHexes[i] || '#000000'} />
+                </div>
               </label>
               <label>
                 Size *
